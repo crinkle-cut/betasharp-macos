@@ -5,7 +5,7 @@ using java.lang;
 using java.net;
 using java.util.logging;
 
-namespace betareborn.Server
+namespace betareborn.Server.Dedicated
 {
     public class DedicatedServer : MinecraftServer
     {
@@ -89,8 +89,8 @@ namespace betareborn.Server
                     }
                 }
 
-                ServerProperties properties = new(new java.io.File("server.properties"));
-                DedicatedServer server = new(properties);
+                DedicatedServerConfiguration config = new(new java.io.File("server.properties"));
+                DedicatedServer server = new(config);
 
                 new RunServerThread(server, "Server thread").start();
             }

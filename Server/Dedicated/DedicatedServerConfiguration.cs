@@ -3,15 +3,15 @@ using java.lang;
 using java.util;
 using java.util.logging;
 
-namespace betareborn.Server
+namespace betareborn.Server.Dedicated
 {
-    public class ServerProperties : IServerConfiguration
+    public class DedicatedServerConfiguration : IServerConfiguration
     {
         public static Logger logger = Logger.getLogger("Minecraft");
         private Properties properties = new Properties();
         private java.io.File propertiesFile;
 
-        public ServerProperties(java.io.File file)
+        public DedicatedServerConfiguration(java.io.File file)
         {
             propertiesFile = file;
             if (file.exists())

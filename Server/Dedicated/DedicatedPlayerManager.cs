@@ -1,6 +1,6 @@
 using java.io;
 
-namespace betareborn.Server
+namespace betareborn.Server.Dedicated
 {
     public class DedicatedPlayerManager : PlayerManager
     {
