@@ -96,6 +96,12 @@ public class SubChunkRenderer : IDisposable
             ConfigureVertexAttribs();
             VertexArray.Unbind();
         }
+        else if (!VertexArray.IsSupported)
+        {
+            // Ensure VBO is unbound if we didn't use a VAO, 
+            // so legacy rendering doesn't try to use it.
+            GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
+        }
     }
 
     private static unsafe void ConfigureVertexAttribs()
@@ -127,6 +133,14 @@ public class SubChunkRenderer : IDisposable
         );
     }
 
+    private static void CleanupVertexAttribs()
+    {
+        GLManager.GL.DisableVertexAttribArray(0);
+        GLManager.GL.DisableVertexAttribArray(1);
+        GLManager.GL.DisableVertexAttribArray(2);
+        GLManager.GL.DisableVertexAttribArray(3);
+    }
+
     public void Render(Shader shader, int pass, Vector3D<double> viewPos, Matrix4X4<float> modelViewMatrix)
     {
         if (pass < 0 || pass > 1)
@@ -148,15 +162,20 @@ public class SubChunkRenderer : IDisposable
         if (VertexArray.IsSupported)
         {
             vertexArrays[pass].Bind();
+            GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
+            VertexArray.Unbind();
         }
         else
         {
             // No VAO: bind VBO and set up vertex attributes manually each draw
             vertexBuffers[pass].Bind();
             ConfigureVertexAttribs();
+            GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
+            
+            // CRITICAL: Cleanup state to avoid corrupting legacy rendering
+            CleanupVertexAttribs();
+            GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
         }
-
-        GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
     }
 
     public void Dispose()
