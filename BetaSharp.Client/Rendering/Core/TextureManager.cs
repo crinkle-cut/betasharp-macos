@@ -31,20 +31,20 @@ public class TextureManager : java.lang.Object
 
     public TextureManager(TexturePacks var1, GameOptions var2)
     {
-        System.Console.Error.WriteLine("[DEBUG-TM] Constructor body entered (field initializers done)"); System.Console.Error.Flush();
+
         texturePacks = var1;
         gameOptions = var2;
-        System.Console.Error.WriteLine("[DEBUG-TM] About to call getGraphics()..."); System.Console.Error.Flush();
+
         Graphics var3 = missingTextureImage.getGraphics();
-        System.Console.Error.WriteLine("[DEBUG-TM] getGraphics() succeeded"); System.Console.Error.Flush();
+
         var3.setColor(java.awt.Color.WHITE);
         var3.fillRect(0, 0, 64, 64);
-        System.Console.Error.WriteLine("[DEBUG-TM] fillRect done"); System.Console.Error.Flush();
+
         var3.setColor(java.awt.Color.BLACK);
         var3.drawString("missingtex", 1, 10);
-        System.Console.Error.WriteLine("[DEBUG-TM] drawString done"); System.Console.Error.Flush();
+
         var3.dispose();
-        System.Console.Error.WriteLine("[DEBUG-TM] Constructor complete"); System.Console.Error.Flush();
+
     }
 
     public int[] getColors(string var1)
