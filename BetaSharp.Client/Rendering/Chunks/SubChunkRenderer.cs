@@ -88,95 +88,87 @@ public class SubChunkRenderer : IDisposable
 
         vertexCounts[bufferIdx] = meshData.Length;
 
-        if (VertexArray.IsSupported && vertexArrays[bufferIdx] == null)
-        {
-            vertexArrays[bufferIdx] = new();
-            vertexArrays[bufferIdx].Bind();
-            buffers[bufferIdx].Bind();
-            ConfigureVertexAttribs();
-            VertexArray.Unbind();
+            if (VertexArray.IsSupported && vertexArrays[bufferIdx] == null)
+            {
+                vertexArrays[bufferIdx] = new();
+                vertexArrays[bufferIdx].Bind();
+                buffers[bufferIdx].Bind();
+                ConfigureVertexAttribs();
+                VertexArray.Unbind();
+            }
+            else if (!VertexArray.IsSupported)
+            {
+                GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
+            }
         }
-        else if (!VertexArray.IsSupported)
+
+        private static unsafe void ConfigureVertexAttribs()
         {
-            // Ensure VBO is unbound if we didn't use a VAO, 
-            // so legacy rendering doesn't try to use it.
-            GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
+            const uint stride = 32;
+
+            GLManager.GL.EnableVertexAttribArray(0);
+            GLManager.GL.VertexAttribPointer(
+                0, 3, GLEnum.Short, false, stride, (void*)4
+            );
+
+            GLManager.GL.EnableVertexAttribArray(1);
+            GLManager.GL.VertexAttribPointer(
+                1, 2, GLEnum.Float, false, stride, (void*)12
+            );
+
+            GLManager.GL.EnableVertexAttribArray(2);
+            GLManager.GL.VertexAttribPointer(
+                2, 4, GLEnum.UnsignedByte, true, stride, (void*)0
+            );
+
+            GLManager.GL.EnableVertexAttribArray(3);
+            GLManager.GL.VertexAttribPointer(
+                3, 1, GLEnum.Float, false, stride, (void*)20
+            );
         }
-    }
 
-    private static unsafe void ConfigureVertexAttribs()
-    {
-        const uint stride = 32;
-
-        // Attrib 0: Position (3 × short at offset 4)
-        GLManager.GL.EnableVertexAttribArray(0);
-        GLManager.GL.VertexAttribPointer(
-            0, 3, GLEnum.Short, false, stride, (void*)4
-        );
-
-        // Attrib 1: UV (2 × float at offset 12)
-        GLManager.GL.EnableVertexAttribArray(1);
-        GLManager.GL.VertexAttribPointer(
-            1, 2, GLEnum.Float, false, stride, (void*)12
-        );
-
-        // Attrib 2: Color (4 × ubyte at offset 0, normalized)
-        GLManager.GL.EnableVertexAttribArray(2);
-        GLManager.GL.VertexAttribPointer(
-            2, 4, GLEnum.UnsignedByte, true, stride, (void*)0
-        );
-
-        // Attrib 3: Light (1 × float at offset 20)
-        GLManager.GL.EnableVertexAttribArray(3);
-        GLManager.GL.VertexAttribPointer(
-            3, 1, GLEnum.Float, false, stride, (void*)20
-        );
-    }
-
-    private static void CleanupVertexAttribs()
-    {
-        GLManager.GL.DisableVertexAttribArray(0);
-        GLManager.GL.DisableVertexAttribArray(1);
-        GLManager.GL.DisableVertexAttribArray(2);
-        GLManager.GL.DisableVertexAttribArray(3);
-    }
-
-    public void Render(Shader shader, int pass, Vector3D<double> viewPos, Matrix4X4<float> modelViewMatrix)
-    {
-        if (pass < 0 || pass > 1)
-            throw new ArgumentException("Pass must be 0 or 1");
-
-        int vertexCount = vertexCounts[pass];
-
-        if (vertexCount == 0)
-            return;
-
-        Vector3D<double> pos = new(PositionMinus.X - viewPos.X, PositionMinus.Y - viewPos.Y, PositionMinus.Z - viewPos.Z);
-        pos += new Vector3D<double>(ClipPosition.X, ClipPosition.Y, ClipPosition.Z);
-
-        modelViewMatrix = Matrix4X4.CreateTranslation(new Vector3D<float>((float)pos.X, (float)pos.Y, (float)pos.Z)) * modelViewMatrix;
-
-        shader.SetUniformMatrix4("modelViewMatrix", modelViewMatrix);
-        shader.SetUniform2("chunkPos", Position.X, Position.Z);
-
-        if (VertexArray.IsSupported)
+        private static void CleanupVertexAttribs()
         {
-            vertexArrays[pass].Bind();
-            GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
-            VertexArray.Unbind();
+            GLManager.GL.DisableVertexAttribArray(0);
+            GLManager.GL.DisableVertexAttribArray(1);
+            GLManager.GL.DisableVertexAttribArray(2);
+            GLManager.GL.DisableVertexAttribArray(3);
         }
-        else
+
+        public void Render(Shader shader, int pass, Vector3D<double> viewPos, Matrix4X4<float> modelViewMatrix)
         {
-            // No VAO: bind VBO and set up vertex attributes manually each draw
-            vertexBuffers[pass].Bind();
-            ConfigureVertexAttribs();
-            GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
-            
-            // CRITICAL: Cleanup state to avoid corrupting legacy rendering
-            CleanupVertexAttribs();
-            GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
+            if (pass < 0 || pass > 1)
+                throw new ArgumentException("Pass must be 0 or 1");
+
+            int vertexCount = vertexCounts[pass];
+
+            if (vertexCount == 0)
+                return;
+
+            Vector3D<double> pos = new(PositionMinus.X - viewPos.X, PositionMinus.Y - viewPos.Y, PositionMinus.Z - viewPos.Z);
+            pos += new Vector3D<double>(ClipPosition.X, ClipPosition.Y, ClipPosition.Z);
+
+            modelViewMatrix = Matrix4X4.CreateTranslation(new Vector3D<float>((float)pos.X, (float)pos.Y, (float)pos.Z)) * modelViewMatrix;
+
+            shader.SetUniformMatrix4("modelViewMatrix", modelViewMatrix);
+            shader.SetUniform2("chunkPos", Position.X, Position.Z);
+
+            if (VertexArray.IsSupported)
+            {
+                vertexArrays[pass].Bind();
+                GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
+                VertexArray.Unbind();
+            }
+            else
+            {
+                vertexBuffers[pass].Bind();
+                ConfigureVertexAttribs();
+                GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
+                
+                CleanupVertexAttribs();
+                GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
+            }
         }
-    }
 
     public void Dispose()
     {

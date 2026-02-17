@@ -17,7 +17,6 @@ public class VertexArray : IDisposable
         {
             if (!_vaoSupported.HasValue)
             {
-                // Try generating a VAO. If it returns 0, VAOs aren't supported.
                 uint testId = GLManager.GL.GenVertexArray();
                 if (testId != 0)
                 {

@@ -26,7 +26,8 @@ public class Shader : IDisposable
         gl.AttachShader(id, vertexShader);
         gl.AttachShader(id, fragmentShader);
 
-        // Bind attribute locations for GLSL 120 (no layout qualifiers)
+        gl.AttachShader(id, fragmentShader);
+
         gl.BindAttribLocation(id, 0, "inPosition");
         gl.BindAttribLocation(id, 1, "inUV");
         gl.BindAttribLocation(id, 2, "inColor");

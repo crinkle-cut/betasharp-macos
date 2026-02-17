@@ -429,8 +429,6 @@ public static unsafe class Display
             if (isCreated())
             {
                 _window!.VSync = value > 0;
-                // Also set directly via GLFW for platforms where Silk.NET's VSync property
-                // may not reliably take effect (e.g. macOS).
                 _glfw?.SwapInterval(value);
             }
         }
@@ -463,9 +461,6 @@ public static unsafe class Display
             options.Samples = MSAA_Samples;
             if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
             {
-                // macOS doesn't support Compatibility profile for 3.2+
-                // Request 2.1 (profile hint is ignored for < 3.2 by GLFW)
-                // which gives the default legacy context with fixed-function pipeline.
                 options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 1));
             }
             else
@@ -497,8 +492,6 @@ public static unsafe class Display
         _gl.ClearColor(_r, _g, _b, 1.0f);
         _gl.Enable(EnableCap.Multisample);
 
-        // Explicitly set swap interval via GLFW to ensure VSync is properly applied.
-        // On macOS, Silk.NET's VSync property set during window creation may not take effect.
         if (_glfw != null)
         {
             _glfw.SwapInterval(_swapInterval);
