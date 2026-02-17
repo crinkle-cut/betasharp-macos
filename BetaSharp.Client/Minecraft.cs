@@ -186,43 +186,43 @@ public partial class Minecraft : java.lang.Object, Runnable
             int[] msaaValues = [0, 2, 4, 8];
             Display.MSAA_Samples = msaaValues[options.msaaLevel];
 
-            Console.Error.WriteLine("[DEBUG] About to call Display.create()...");
+
             Display.create();
-            Console.Error.WriteLine($"[DEBUG] Display.create() succeeded. isCreated={Display.isCreated()}");
+
             Display.getGlfw().SetWindowSizeLimits(Display.getWindowHandle(), 850, 480, 3840, 2160);
 
             GLManager.Init(Display.getGL()!);
-            Console.Error.WriteLine("[DEBUG] GLManager.Init() succeeded");
+
         }
         catch (System.Exception var6)
         {
-            Console.Error.WriteLine($"[DEBUG] Display/GL init FAILED: {var6}");
+
         }
-        Console.Error.WriteLine("[DEBUG] About to create TexturePacks..."); Console.Error.Flush();
+
         texturePackList = new TexturePacks(this, mcDataDir);
-        Console.Error.WriteLine("[DEBUG] About to create TextureManager..."); Console.Error.Flush();
+
         try
         {
             textureManager = new TextureManager(texturePackList, options);
         }
         catch (System.Exception ex)
         {
-            Console.Error.WriteLine($"[DEBUG] TextureManager EXCEPTION: {ex}"); Console.Error.Flush();
+
             throw;
         }
-        Console.Error.WriteLine("[DEBUG] TextureManager created"); Console.Error.Flush();
+
         fontRenderer = new TextRenderer(options, textureManager);
-        Console.Error.WriteLine("[DEBUG] FontRenderer created"); Console.Error.Flush();
+
         WaterColors.loadColors(textureManager.getColors("/misc/watercolor.png"));
-        Console.Error.WriteLine("[DEBUG] WaterColors loaded"); Console.Error.Flush();
+
         GrassColors.loadColors(textureManager.getColors("/misc/grasscolor.png"));
         FoliageColors.loadColors(textureManager.getColors("/misc/foliagecolor.png"));
-        Console.Error.WriteLine("[DEBUG] Colors loaded"); Console.Error.Flush();
+
         gameRenderer = new GameRenderer(this);
-        Console.Error.WriteLine("[DEBUG] GameRenderer created"); Console.Error.Flush();
+
         EntityRenderDispatcher.instance.heldItemRenderer = new HeldItemRenderer(this);
         statFileWriter = new StatFileWriter(session, mcDataDir);
-        Console.Error.WriteLine("[DEBUG] StatFileWriter created"); Console.Error.Flush();
+
 
         StatStringFormatKeyInv format = new(this);
         BetaSharp.Achievements.OpenInventory.GetTranslatedDescription = () =>
@@ -230,9 +230,9 @@ public partial class Minecraft : java.lang.Object, Runnable
             return format.formatString(BetaSharp.Achievements.OpenInventory.TranslationKey);
         };
 
-        Console.Error.WriteLine("[DEBUG] About to call loadScreen()...");
+
         loadScreen();
-        Console.Error.WriteLine("[DEBUG] loadScreen() completed");
+
 
         bool anisotropicFiltering = GLManager.GL.IsExtensionPresent("GL_EXT_texture_filter_anisotropic");
         Console.WriteLine($"Anisotropic Filtering Supported: {anisotropicFiltering}");
@@ -261,7 +261,7 @@ public partial class Minecraft : java.lang.Object, Runnable
             imGuiController = null;
         }
 
-        Console.Error.WriteLine("[DEBUG] About to create Keyboard/Mouse...");
+
         Keyboard.create(Display.getGlfw(), Display.getWindowHandle());
         Mouse.create(Display.getGlfw(), Display.getWindowHandle(), Display.getWidth(), Display.getHeight());
         mouseHelper = new MouseHelper();
@@ -279,7 +279,7 @@ public partial class Minecraft : java.lang.Object, Runnable
         GLManager.GL.LoadIdentity();
         GLManager.GL.MatrixMode(GLEnum.Modelview);
         checkGLError("Startup");
-        Console.Error.WriteLine("[DEBUG] GL state setup complete");
+
         sndManager.loadSoundSettings(options);
         textureManager.addDynamicTexture(textureLavaFX);
         textureManager.addDynamicTexture(textureWaterFX);
@@ -299,7 +299,7 @@ public partial class Minecraft : java.lang.Object, Runnable
 
         checkGLError("Post startup");
         ingameGUI = new GuiIngame(this);
-        Console.Error.WriteLine("[DEBUG] About to display main menu");
+
 
         if (serverName != null)
         {
@@ -309,7 +309,7 @@ public partial class Minecraft : java.lang.Object, Runnable
         {
             displayGuiScreen(new GuiMainMenu());
         }
-        Console.Error.WriteLine("[DEBUG] startGame() finished");
+
     }
 
     private void loadScreen()
@@ -539,13 +539,13 @@ public partial class Minecraft : java.lang.Object, Runnable
 
         try
         {
-            Console.Error.WriteLine("[DEBUG] startGame() starting...");
+
             startGame();
-            Console.Error.WriteLine("[DEBUG] startGame() completed successfully");
+
         }
         catch (java.lang.Exception startupException)
         {
-            Console.Error.WriteLine($"[DEBUG] startGame() threw java exception: {startupException}");
+
             startupException.printStackTrace();
             onMinecraftCrash(new UnexpectedThrowable("Failed to start game", startupException));
             return;
@@ -1696,7 +1696,7 @@ public partial class Minecraft : java.lang.Object, Runnable
         }
         catch (System.Exception ex)
         {
-            Console.Error.WriteLine($"[DEBUG] UNHANDLED EXCEPTION in run(): {ex}");
+
         }
     }
 
