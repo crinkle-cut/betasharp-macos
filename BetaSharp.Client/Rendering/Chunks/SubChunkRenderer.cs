@@ -88,54 +88,43 @@ public class SubChunkRenderer : IDisposable
 
         vertexCounts[bufferIdx] = meshData.Length;
 
-        if (vertexArrays[bufferIdx] == null)
+        if (VertexArray.IsSupported && vertexArrays[bufferIdx] == null)
         {
             vertexArrays[bufferIdx] = new();
             vertexArrays[bufferIdx].Bind();
             buffers[bufferIdx].Bind();
-
-            const uint stride = 16;
-
-            GLManager.GL.EnableVertexAttribArray(0);
-            GLManager.GL.VertexAttribPointer(
-                0,
-                3,
-                GLEnum.Short,
-                false,
-                stride,
-                (void*)4
-            );
-
-            GLManager.GL.EnableVertexAttribArray(1);
-            GLManager.GL.VertexAttribIPointer(
-                1,
-                2,
-                GLEnum.UnsignedShort,
-                stride,
-                (void*)10
-            );
-
-            GLManager.GL.EnableVertexAttribArray(2);
-            GLManager.GL.VertexAttribPointer(
-                2,
-                4,
-                GLEnum.UnsignedByte,
-                true,
-                stride,
-                (void*)0
-            );
-
-            GLManager.GL.EnableVertexAttribArray(3);
-            GLManager.GL.VertexAttribIPointer(
-                3,
-                1,
-                GLEnum.UnsignedByte,
-                stride,
-                (void*)14
-            );
-
+            ConfigureVertexAttribs();
             VertexArray.Unbind();
         }
+    }
+
+    private static unsafe void ConfigureVertexAttribs()
+    {
+        const uint stride = 32;
+
+        // Attrib 0: Position (3 × short at offset 4)
+        GLManager.GL.EnableVertexAttribArray(0);
+        GLManager.GL.VertexAttribPointer(
+            0, 3, GLEnum.Short, false, stride, (void*)4
+        );
+
+        // Attrib 1: UV (2 × float at offset 12)
+        GLManager.GL.EnableVertexAttribArray(1);
+        GLManager.GL.VertexAttribPointer(
+            1, 2, GLEnum.Float, false, stride, (void*)12
+        );
+
+        // Attrib 2: Color (4 × ubyte at offset 0, normalized)
+        GLManager.GL.EnableVertexAttribArray(2);
+        GLManager.GL.VertexAttribPointer(
+            2, 4, GLEnum.UnsignedByte, true, stride, (void*)0
+        );
+
+        // Attrib 3: Light (1 × float at offset 20)
+        GLManager.GL.EnableVertexAttribArray(3);
+        GLManager.GL.VertexAttribPointer(
+            3, 1, GLEnum.Float, false, stride, (void*)20
+        );
     }
 
     public void Render(Shader shader, int pass, Vector3D<double> viewPos, Matrix4X4<float> modelViewMatrix)
@@ -156,7 +145,16 @@ public class SubChunkRenderer : IDisposable
         shader.SetUniformMatrix4("modelViewMatrix", modelViewMatrix);
         shader.SetUniform2("chunkPos", Position.X, Position.Z);
 
-        vertexArrays[pass].Bind();
+        if (VertexArray.IsSupported)
+        {
+            vertexArrays[pass].Bind();
+        }
+        else
+        {
+            // No VAO: bind VBO and set up vertex attributes manually each draw
+            vertexBuffers[pass].Bind();
+            ConfigureVertexAttribs();
+        }
 
         GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
     }

@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Silk.NET.GLFW;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;
@@ -347,7 +348,7 @@ public static unsafe class Display
     }
 
     /// <summary>
-    /// Return the width of the Display window.
+    /// Return the width of the Display window (logical pixels).
     /// </summary>
     public static int getWidth()
     {
@@ -357,13 +358,30 @@ public static unsafe class Display
     }
 
     /// <summary>
-    /// Return the height of the Display window.
+    /// Return the height of the Display window (logical pixels).
     /// </summary>
     public static int getHeight()
     {
         if (isFullscreen())
             return _currentMode.getHeight();
         return _window?.Size.Y ?? _currentMode.getHeight();
+    }
+
+    /// <summary>
+    /// Return the framebuffer width in actual pixels (accounts for HiDPI/Retina).
+    /// Use this for glViewport and similar calls that need pixel dimensions.
+    /// </summary>
+    public static int getFramebufferWidth()
+    {
+        return _window?.FramebufferSize.X ?? getWidth();
+    }
+
+    /// <summary>
+    /// Return the framebuffer height in actual pixels (accounts for HiDPI/Retina).
+    /// </summary>
+    public static int getFramebufferHeight()
+    {
+        return _window?.FramebufferSize.Y ?? getHeight();
     }
 
     /// <summary>
@@ -438,7 +456,17 @@ public static unsafe class Display
             options.VSync = _swapInterval > 0;
             options.IsVisible = true;
             options.Samples = MSAA_Samples;
-            options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 3));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // macOS doesn't support Compatibility profile for 3.2+
+                // Request 2.1 (profile hint is ignored for < 3.2 by GLFW)
+                // which gives the default legacy context with fixed-function pipeline.
+                options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(2, 1));
+            }
+            else
+            {
+                options.API = new GraphicsAPI(ContextAPI.OpenGL, ContextProfile.Compatability, ContextFlags.Default, new APIVersion(3, 3));
+            }
 
             if (_x >= 0 && _y >= 0)
                 options.Position = new Vector2D<int>(_x, _y);

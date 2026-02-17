@@ -437,7 +437,7 @@ public class GameRenderer
             }
             else
             {
-                GLManager.GL.Viewport(0, 0, (uint)client.displayWidth, (uint)client.displayHeight);
+                GLManager.GL.Viewport(0, 0, (uint)Display.getFramebufferWidth(), (uint)Display.getFramebufferHeight());
                 GLManager.GL.MatrixMode(GLEnum.Projection);
                 GLManager.GL.LoadIdentity();
                 GLManager.GL.MatrixMode(GLEnum.Modelview);

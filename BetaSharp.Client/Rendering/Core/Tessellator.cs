@@ -19,24 +19,24 @@ public struct Vertex(float x, float y, float z, float u, float v, int color, int
     public int Padding; // 32 bytes total
 }
 
-[StructLayout(LayoutKind.Sequential, Size = 16)]
+[StructLayout(LayoutKind.Sequential, Size = 32)]
 public struct ChunkVertex
 {
-    public int Color; // 4 bytes
-    public short X; // 2 bytes + 4 bytes = 6 bytes
-    public short Y; // 2 bytes + 6 bytes = 8 bytes
-    public short Z; // 2 bytes + 8 bytes = 10 bytes
-    public short U; // 2 bytes + 10 bytes = 12 bytes
-    public short V; // 2 bytes + 12 bytes = 14 bytes
-    public byte Light; // 1 byte + 14 bytes = 15 bytes
-    public byte Padding; // 16 bytes total
+    public int Color; // 4 bytes (offset 0)
+    public short X; // 2 bytes (offset 4)
+    public short Y; // 2 bytes (offset 6)
+    public short Z; // 2 bytes (offset 8)
+    public short Padding1; // 2 bytes (offset 10) — alignment
+    public float U; // 4 bytes (offset 12)
+    public float V; // 4 bytes (offset 16)
+    public float Light; // 4 bytes (offset 20)
+    public float Padding2; // 4 bytes (offset 24) — alignment to 32
+    public int Padding3; // 4 bytes (offset 28) — alignment to 32
 }
 
 public static class ChunkVertexHelper
 {
     private const float POSITION_SCALE = 32767f / 64f;
-
-    private const float UV_SCALE = 32767f;
 
     public static ChunkVertex Create(
         int color,
@@ -50,30 +50,27 @@ public static class ChunkVertexHelper
         byte skyLight,
         byte blockLight)
     {
+        // Apply UV inset bias on the CPU instead of in the shader
+        float biasU = u < centroidU ? (1.0f / 65536.0f) : -(1.0f / 65536.0f);
+        float biasV = v < centroidV ? (1.0f / 65536.0f) : -(1.0f / 65536.0f);
+
         return new ChunkVertex
         {
             Color = color,
             X = FloatToShortPosition(x),
             Y = FloatToShortPosition(y),
             Z = FloatToShortPosition(z),
-            U = FloatToShortUVWithInset(u, centroidU),
-            V = FloatToShortUVWithInset(v, centroidV),
-            Light = PackLight(skyLight, blockLight),
-            Padding = 0
+            U = u + biasU,
+            V = v + biasV,
+            Light = PackLightFloat(skyLight, blockLight),
         };
     }
 
-    private static short FloatToShortUVWithInset(float uv, float centroid)
+    private static float PackLightFloat(byte skyLight, byte blockLight)
     {
-        int bias = uv < centroid ? 1 : -1;
-        int quantized = (int)System.Math.Round(uv * UV_SCALE) + bias;
-
-        return (short)(quantized & 0x7FFF | Sign(bias) << 15);
-    }
-
-    private static int Sign(int x)
-    {
-        return x < 0 ? 1 : 0;
+        // Pack into a single byte value as before, store as float for GL 2.1 compat
+        byte packed = (byte)((skyLight & 0x0F) << 4 | (blockLight & 0x0F));
+        return packed / 255.0f;
     }
 
     public static short FloatToShortPosition(float position)
@@ -83,7 +80,7 @@ public static class ChunkVertexHelper
 
     public static short FloatToShortUV(float uv)
     {
-        return (short)(uv * UV_SCALE);
+        return (short)(uv * 32767f);
     }
 
     public static byte PackLight(byte skyLight, byte blockLight)

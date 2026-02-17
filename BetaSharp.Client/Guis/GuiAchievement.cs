@@ -48,7 +48,7 @@ public class GuiAchievement : Gui
 
     private void updateAchievementWindowScale()
     {
-        GLManager.GL.Viewport(0, 0, (uint)theGame.displayWidth, (uint)theGame.displayHeight);
+        GLManager.GL.Viewport(0, 0, (uint)Display.getFramebufferWidth(), (uint)Display.getFramebufferHeight());
         GLManager.GL.MatrixMode(GLEnum.Projection);
         GLManager.GL.LoadIdentity();
         GLManager.GL.MatrixMode(GLEnum.Modelview);

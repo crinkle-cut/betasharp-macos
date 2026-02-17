@@ -1,10 +1,8 @@
-﻿#version 460
+﻿#version 120
 
-in vec4 vertexColor;
-in vec2 texCoord;
-in float fogDistance;
-
-out vec4 FragColor;
+varying vec4 vertexColor;
+varying vec2 texCoord;
+varying float fogDistance;
 
 uniform sampler2D textureSampler;
 uniform vec4 fogColor;
@@ -15,7 +13,7 @@ uniform int fogMode;
 
 void main() 
 {
-    vec4 texColor = texture(textureSampler, texCoord);
+    vec4 texColor = texture2D(textureSampler, texCoord);
     vec4 finalColor = texColor * vertexColor;
 
     if (finalColor.a < 0.001)
@@ -36,5 +34,5 @@ void main()
     
     fogFactor = clamp(fogFactor, 0.0, 1.0);
     
-    FragColor = mix(fogColor, finalColor, fogFactor);
+    gl_FragColor = mix(fogColor, finalColor, fogFactor);
 }

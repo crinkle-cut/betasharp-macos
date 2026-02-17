@@ -1,13 +1,13 @@
-﻿#version 460
+﻿#version 120
 
-layout(location = 0) in vec3 inPosition;
-layout(location = 1) in uvec2 inUV;
-layout(location = 2) in vec4 inColor;
-layout(location = 3) in uint inLight;
+attribute vec3 inPosition;
+attribute vec2 inUV;
+attribute vec4 inColor;
+attribute float inLight;
 
-out vec4 vertexColor;
-out vec2 texCoord;
-out float fogDistance;
+varying vec4 vertexColor;
+varying vec2 texCoord;
+varying float fogDistance;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
@@ -22,14 +22,14 @@ vec3 unpackPosition(vec3 packedPos)
     return packedPos * POSITION_SCALE_INV;
 }
 
-float unpackSkyLight(uint light)
+float unpackSkyLight(float light)
 {
-    return float((light >> 4) & 0xFu) / 15.0;
+    return floor(light * 255.0 / 16.0) / 15.0;
 }
 
-float unpackBlockLight(uint light)
+float unpackBlockLight(float light)
 {
-    return float(light & 0xFu) / 15.0;
+    return mod(light * 255.0, 16.0) / 15.0;
 }
 
 int atlasIndexFromUV(vec2 uv)
@@ -70,16 +70,7 @@ void applyWaterWaves(inout vec3 position) {
 void main() 
 {
     vec3 position = unpackPosition(inPosition);
-    vec2 uv = vec2(inUV & 0x7FFFu) / 32767.0;
-    uvec2 signBits = (inUV >> 15u) & 1u;
-    
-    const float epsilon = 1.0 / 65536.0;
-    vec2 bias = vec2(
-        (signBits.x == 0u) ? epsilon : -epsilon,
-        (signBits.y == 0u) ? epsilon : -epsilon
-    );
-    
-    uv += bias;
+    vec2 uv = inUV;
 
     if (envAnim)
     {
