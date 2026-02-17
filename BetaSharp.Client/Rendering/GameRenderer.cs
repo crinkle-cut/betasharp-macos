@@ -418,10 +418,7 @@ public class GameRenderer
             int var17 = var15 - Mouse.getY() * var15 / client.displayHeight - 1;
             int var7 = 30 + (int)(client.options.limitFramerate * 210.0f);
 
-            if (var7 < 240)
-            {
-                Display.setVSyncEnabled(false);
-            }
+            Display.setVSyncEnabled(false);
 
             if (client.world != null)
             {
@@ -475,9 +472,9 @@ public class GameRenderer
                         Thread.SpinWait(10);
                     }
                 }
-
-                fpsTimer.Restart();
             }
+
+            fpsTimer.Restart();
         }
     }
 

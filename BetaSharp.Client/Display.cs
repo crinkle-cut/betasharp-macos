@@ -427,7 +427,12 @@ public static unsafe class Display
         {
             _swapInterval = value;
             if (isCreated())
+            {
                 _window!.VSync = value > 0;
+                // Also set directly via GLFW for platforms where Silk.NET's VSync property
+                // may not reliably take effect (e.g. macOS).
+                _glfw?.SwapInterval(value);
+            }
         }
     }
 
@@ -491,6 +496,13 @@ public static unsafe class Display
         _gl = GL.GetApi(_window);
         _gl.ClearColor(_r, _g, _b, 1.0f);
         _gl.Enable(EnableCap.Multisample);
+
+        // Explicitly set swap interval via GLFW to ensure VSync is properly applied.
+        // On macOS, Silk.NET's VSync property set during window creation may not take effect.
+        if (_glfw != null)
+        {
+            _glfw.SwapInterval(_swapInterval);
+        }
     }
 
     private static void onResize(Vector2D<int> size)
