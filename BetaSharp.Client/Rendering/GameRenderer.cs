@@ -500,7 +500,7 @@ public class GameRenderer
         ChunkSource var13 = client.world.getChunkSource();
 
         Profiler.Start("updateFog");
-        GLManager.GL.Viewport(0, 0, (uint)client.displayWidth, (uint)client.displayHeight);
+        GLManager.GL.Viewport(0, 0, (uint)Display.getFramebufferWidth(), (uint)Display.getFramebufferHeight());
         updateSkyAndFogColors(tickDelta);
         Profiler.Stop("updateFog");
         GLManager.GL.Clear(ClearBufferMask.DepthBufferBit | ClearBufferMask.ColorBufferBit);
