@@ -373,12 +373,13 @@ public static unsafe class Display
     /// </summary>
     public static int getFramebufferWidth()
     {
+        int fw = getWidth();
         if (isCreated() && _glfw != null)
         {
-            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out int fw, out _);
-            return fw;
+            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out fw, out _);
         }
-        return getWidth();
+
+        return fw;
     }
 
     /// <summary>
@@ -386,12 +387,13 @@ public static unsafe class Display
     /// </summary>
     public static int getFramebufferHeight()
     {
+        int fh = getHeight();
         if (isCreated() && _glfw != null)
         {
-            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out _, out int fh);
-            return fh;
+            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out _, out fh);
         }
-        return getHeight();
+
+        return fh;
     }
 
     /// <summary>
@@ -461,6 +463,11 @@ public static unsafe class Display
         {
             if (isCreated())
                 throw new InvalidOperationException("Only one LWJGL context may be instantiated at any one time.");
+
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX) && BetaSharp.Client.Minecraft.INSTANCE?.options?.ReduceResolutionOnMac == true)
+            {
+                _glfw?.WindowHint((WindowHintBool)0x00023001, false);
+            }
 
             var options = WindowOptions.Default;
             options.Size = new Vector2D<int>(_currentMode.getWidth(), _currentMode.getHeight());

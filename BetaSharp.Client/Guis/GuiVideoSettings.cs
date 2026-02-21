@@ -19,7 +19,8 @@ public class GuiVideoSettings : GuiScreen
         EnumOptions.MIPMAPS,
         EnumOptions.MSAA,
         EnumOptions.ENVIRONMENT_ANIMATION,
-        EnumOptions.DEBUG_MODE
+        EnumOptions.DEBUG_MODE,
+        EnumOptions.REDUCE_RESOLUTION
     };
 
     public GuiVideoSettings(GuiScreen parent, GameOptions options)

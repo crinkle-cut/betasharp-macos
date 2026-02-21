@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using BetaSharp.Client.Input;
 
 namespace BetaSharp.Client.Options;
@@ -76,6 +77,8 @@ public class GameOptions
     public bool UseMipmaps = true;
     public bool DebugMode;
     public bool EnvironmentAnimation = true;
+    public bool ReduceResolutionOnMac = false;
+    public bool INITIAL_REDUCE_RESOLUTION;
 
     public GameOptions(Minecraft mc, string mcDataDir)
     {
@@ -96,6 +99,7 @@ public class GameOptions
         _optionsPath = System.IO.Path.Combine(mcDataDir, "options.txt");
         LoadOptions();
         INITIAL_MSAA = MSAALevel;
+        INITIAL_REDUCE_RESOLUTION = ReduceResolutionOnMac;
     }
 
     public GameOptions() { }
@@ -201,6 +205,15 @@ public class GameOptions
         {
             EnvironmentAnimation = !EnvironmentAnimation;
         }
+        else if (option == EnumOptions.REDUCE_RESOLUTION)
+        {
+            ReduceResolutionOnMac = !ReduceResolutionOnMac;
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                // Note: The player needs to restart or toggle fullscreen to trigger GLFW window hint refresh.
+                // We could throw a reload or just let it be handled on next resize or restart.
+            }
+        }
 
         SaveOptions();
     }
@@ -225,6 +238,7 @@ public class GameOptions
             3 => UseMipmaps,
             4 => DebugMode,
             5 => EnvironmentAnimation,
+            6 => ReduceResolutionOnMac,
             _ => false
         };
     }
@@ -241,7 +255,12 @@ public class GameOptions
         else if (option.getEnumBoolean())
         {
             bool isEnabled = GetOptionOrdinalValue(option);
-            return label + (isEnabled ? translations.TranslateKey("options.on") : translations.TranslateKey("options.off"));
+            string result = label + (isEnabled ? translations.TranslateKey("options.on") : translations.TranslateKey("options.off"));
+            if (option == EnumOptions.REDUCE_RESOLUTION && isEnabled != INITIAL_REDUCE_RESOLUTION)
+            {
+                result += " (Restart required)";
+            }
+            return result;
         }
         else if (option == EnumOptions.MSAA)
         {
@@ -365,6 +384,7 @@ public class GameOptions
             case "useMipmaps": UseMipmaps = value == "true"; break;
             case "debugMode": DebugMode = value == "true"; break;
             case "envAnimation": EnvironmentAnimation = value == "true"; break;
+            case "reduceResolutionOnMac": ReduceResolutionOnMac = value == "true"; break;
             case "cameraMode": CameraMode = (EnumCameraMode)int.Parse(value); break;
             case "thirdPersonView": // backward compatibility
                 CameraMode = value == "true" ? EnumCameraMode.ThirdPerson : EnumCameraMode.FirstPerson;
@@ -420,6 +440,7 @@ public class GameOptions
             writer.WriteLine($"useMipmaps:{UseMipmaps.ToString().ToLower()}");
             writer.WriteLine($"debugMode:{DebugMode.ToString().ToLower()}");
             writer.WriteLine($"envAnimation:{EnvironmentAnimation.ToString().ToLower()}");
+            writer.WriteLine($"reduceResolutionOnMac:{ReduceResolutionOnMac.ToString().ToLower()}");
             writer.WriteLine($"cameraMode:{(int)CameraMode}");
 
             foreach (var bind in KeyBindings)
