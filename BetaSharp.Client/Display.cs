@@ -373,7 +373,12 @@ public static unsafe class Display
     /// </summary>
     public static int getFramebufferWidth()
     {
-        return _window?.FramebufferSize.X ?? getWidth();
+        if (isCreated() && _glfw != null)
+        {
+            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out int fw, out _);
+            return fw;
+        }
+        return getWidth();
     }
 
     /// <summary>
@@ -381,7 +386,12 @@ public static unsafe class Display
     /// </summary>
     public static int getFramebufferHeight()
     {
-        return _window?.FramebufferSize.Y ?? getHeight();
+        if (isCreated() && _glfw != null)
+        {
+            _glfw.GetFramebufferSize((WindowHandle*)_window!.Handle, out _, out int fh);
+            return fh;
+        }
+        return getHeight();
     }
 
     /// <summary>

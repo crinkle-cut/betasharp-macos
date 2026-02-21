@@ -309,7 +309,7 @@ public class GameRenderer
 
             }
 
-            fpsTimer.Restart();
+            _fpsTimer.Restart();
         }
     }
 
