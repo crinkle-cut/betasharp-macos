@@ -1,4 +1,4 @@
-﻿#version 120
+#version 410
 
 varying vec4 vertexColor;
 varying vec2 texCoord;
@@ -34,5 +34,5 @@ void main()
     
     fogFactor = clamp(fogFactor, 0.0, 1.0);
     
-    gl_FragColor = mix(fogColor, finalColor, fogFactor);
+    FragColor = mix(fogColor, finalColor, fogFactor);
 }
