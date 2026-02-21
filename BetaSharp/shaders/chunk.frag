@@ -1,8 +1,8 @@
 #version 410
 
-varying vec4 vertexColor;
-varying vec2 texCoord;
-varying float fogDistance;
+in vec4 vertexColor;
+in vec2 texCoord;
+in float fogDistance;
 
 uniform sampler2D textureSampler;
 uniform vec4 fogColor;
@@ -11,9 +11,11 @@ uniform float fogStart;
 uniform float fogEnd;
 uniform int fogMode;
 
+out vec4 FragColor;
+
 void main() 
 {
-    vec4 texColor = texture2D(textureSampler, texCoord);
+    vec4 texColor = texture(textureSampler, texCoord);
     vec4 finalColor = texColor * vertexColor;
 
     if (finalColor.a < 0.001)

@@ -1,13 +1,13 @@
 #version 410
 
-attribute vec3 inPosition;
-attribute vec2 inUV;
-attribute vec4 inColor;
-attribute float inLight;
+in vec3 inPosition;
+in vec2 inUV;
+in vec4 inColor;
+in float inLight;
 
-varying vec4 vertexColor;
-varying vec2 texCoord;
-varying float fogDistance;
+out vec4 vertexColor;
+out vec2 texCoord;
+out float fogDistance;
 
 uniform mat4 modelViewMatrix;
 uniform mat4 projectionMatrix;
