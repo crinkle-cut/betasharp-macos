@@ -17,7 +17,7 @@ public class ClientWorld : World
     private readonly List<BlockReset> _blockResets = [];
     private readonly ClientNetworkHandler _networkHandler;
     private MultiplayerChunkCache _chunkCache;
-    private readonly IntHashMap entitiesByNetworkId = new();
+    private readonly Dictionary<int, Entity> entitiesByNetworkId = new();
     private readonly HashSet<Entity> forcedEntities = [];
     private readonly HashSet<Entity> pendingEntities = [];
 
@@ -28,7 +28,7 @@ public class ClientWorld : World
         persistentStateManager = netHandler.clientPersistentStateManager;
     }
 
-    public override void Tick(int _)
+    public override void Tick()
     {
         setTime(getTime() + 1L);
         int ambient = getAmbientDarkness(1.0F);
@@ -97,11 +97,11 @@ public class ClientWorld : World
     {
         if (load)
         {
-            _chunkCache.loadChunk(chunkX, chunkZ);
+            _chunkCache.LoadChunk(chunkX, chunkZ);
         }
         else
         {
-            _chunkCache.unloadChunk(chunkX, chunkZ);
+            _chunkCache.UnloadChunk(chunkX, chunkZ);
         }
 
         if (!load)
@@ -165,18 +165,17 @@ public class ClientWorld : World
             pendingEntities.Add(ent);
         }
 
-        entitiesByNetworkId.put(networkId, ent);
+        entitiesByNetworkId[networkId] = ent;
     }
 
     public Entity GetEntity(int networkId)
     {
-        return (Entity)entitiesByNetworkId.get(networkId);
+        return entitiesByNetworkId.GetValueOrDefault(networkId);
     }
 
     public Entity RemoveEntityFromWorld(int networkId)
     {
-        Entity ent = (Entity)entitiesByNetworkId.remove(networkId);
-        if (ent != null)
+        if (entitiesByNetworkId.Remove(networkId, out Entity ent))
         {
             forcedEntities.Remove(ent);
             Remove(ent);

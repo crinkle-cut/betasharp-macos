@@ -5,13 +5,14 @@ using BetaSharp.NBT;
 using BetaSharp.Util.Maths;
 using BetaSharp.Worlds;
 using java.lang;
+using Math = System.Math;
 
 namespace BetaSharp.Entities;
 
 public abstract class Entity : java.lang.Object
 {
     public static readonly Class Class = ikvm.runtime.Util.getClassFromTypeHandle(typeof(Entity).TypeHandle);
-    private static int nextEntityID = 0;
+    private static int nextEntityID;
     public int id = nextEntityID++;
     public double renderDistanceWeight = 1.0D;
     public bool preventEntitySpawning = false;
@@ -32,34 +33,34 @@ public abstract class Entity : java.lang.Object
     public float prevYaw;
     public float prevPitch;
     public Box boundingBox = new Box(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
-    public bool onGround = false;
+    public bool onGround;
     public bool horizontalCollison;
     public bool verticalCollision;
-    public bool hasCollided = false;
-    public bool velocityModified = false;
+    public bool hasCollided;
+    public bool velocityModified;
     public bool slowed;
     public bool keepVelocityOnCollision = true;
-    public bool dead = false;
+    public bool dead;
     public float standingEyeHeight = 0.0F;
     public float width = 0.6F;
     public float height = 1.8F;
-    public float prevHorizontalSpeed = 0.0F;
-    public float horizontalSpeed = 0.0F;
-    protected float fallDistance = 0.0F;
+    public float prevHorizontalSpeed;
+    public float horizontalSpeed;
+    protected float fallDistance;
     private int nextStepSoundDistance = 1;
     public double lastTickX;
     public double lastTickY;
     public double lastTickZ;
-    public float cameraOffset = 0.0F;
+    public float cameraOffset;
     public float stepHeight = 0.0F;
     public bool noClip = false;
     public float pushSpeedReduction = 0.0F;
-    protected java.util.Random random = new();
+    protected JavaRandom random = new();
     public int age = 0;
     public int fireImmunityTicks = 1;
-    public int fireTicks = 0;
+    public int fireTicks;
     protected int maxAir = 300;
-    protected bool inWater = false;
+    protected bool inWater;
     public int hearts = 0;
     public int air = 300;
     private bool firstTick = true;
@@ -194,29 +195,29 @@ public abstract class Entity : java.lang.Object
         {
             if (!inWater && !firstTick)
             {
-                float var1 = MathHelper.sqrt_double(velocityX * velocityX * (double)0.2F + velocityY * velocityY + velocityZ * velocityZ * (double)0.2F) * 0.2F;
+                float var1 = MathHelper.Sqrt(velocityX * velocityX * (double)0.2F + velocityY * velocityY + velocityZ * velocityZ * (double)0.2F) * 0.2F;
                 if (var1 > 1.0F)
                 {
                     var1 = 1.0F;
                 }
 
-                world.playSound(this, "random.splash", var1, 1.0F + (random.nextFloat() - random.nextFloat()) * 0.4F);
-                float var2 = (float)MathHelper.floor_double(boundingBox.minY);
+                world.playSound(this, "random.splash", var1, 1.0F + (random.NextFloat() - random.NextFloat()) * 0.4F);
+                float var2 = (float)MathHelper.Floor(boundingBox.minY);
 
                 int var3;
                 float var4;
                 float var5;
                 for (var3 = 0; (float)var3 < 1.0F + width * 20.0F; ++var3)
                 {
-                    var4 = (random.nextFloat() * 2.0F - 1.0F) * width;
-                    var5 = (random.nextFloat() * 2.0F - 1.0F) * width;
-                    world.addParticle("bubble", x + (double)var4, (double)(var2 + 1.0F), z + (double)var5, velocityX, velocityY - (double)(random.nextFloat() * 0.2F), velocityZ);
+                    var4 = (random.NextFloat() * 2.0F - 1.0F) * width;
+                    var5 = (random.NextFloat() * 2.0F - 1.0F) * width;
+                    world.addParticle("bubble", x + (double)var4, (double)(var2 + 1.0F), z + (double)var5, velocityX, velocityY - (double)(random.NextFloat() * 0.2F), velocityZ);
                 }
 
                 for (var3 = 0; (float)var3 < 1.0F + width * 20.0F; ++var3)
                 {
-                    var4 = (random.nextFloat() * 2.0F - 1.0F) * width;
-                    var5 = (random.nextFloat() * 2.0F - 1.0F) * width;
+                    var4 = (random.NextFloat() * 2.0F - 1.0F) * width;
+                    var5 = (random.NextFloat() * 2.0F - 1.0F) * width;
                     world.addParticle("splash", x + (double)var4, (double)(var2 + 1.0F), z + (double)var5, velocityX, velocityY, velocityZ);
                 }
             }
@@ -525,40 +526,44 @@ public abstract class Entity : java.lang.Object
             int var39;
             if (bypassesSteppingEffects() && !var18 && vehicle == null)
             {
-                horizontalSpeed = (float)((double)horizontalSpeed + (double)MathHelper.sqrt_double(var37 * var37 + var23 * var23) * 0.6D);
-                var38 = MathHelper.floor_double(this.x);
-                var26 = MathHelper.floor_double(this.y - (double)0.2F - (double)standingEyeHeight);
-                var39 = MathHelper.floor_double(this.z);
-                var28 = world.getBlockId(var38, var26, var39);
-                if (world.getBlockId(var38, var26 - 1, var39) == Block.Fence.id)
-                {
-                    var28 = world.getBlockId(var38, var26 - 1, var39);
-                }
+                horizontalSpeed = (float)((double)horizontalSpeed + (double)MathHelper.Sqrt(var37 * var37 + var23 * var23) * 0.6D);
 
-                if (horizontalSpeed > (float)nextStepSoundDistance && var28 > 0)
+                if (onGround)
                 {
-                    ++nextStepSoundDistance;
-                    BlockSoundGroup var29 = Block.Blocks[var28].soundGroup;
-                    if (world.getBlockId(var38, var26 + 1, var39) == Block.Snow.id)
-                    {
-                        var29 = Block.Snow.soundGroup;
-                        world.playSound(this, var29.func_1145_d(), var29.getVolume() * 0.15F, var29.getPitch());
-                    }
-                    else if (!Block.Blocks[var28].material.IsFluid)
-                    {
-                        world.playSound(this, var29.func_1145_d(), var29.getVolume() * 0.15F, var29.getPitch());
-                    }
+	                var38 = MathHelper.Floor(this.x);
+	                var26 = MathHelper.Floor(this.y - (double)0.2F - (double)standingEyeHeight);
+	                var39 = MathHelper.Floor(this.z);
+	                var28 = world.getBlockId(var38, var26, var39);
+	                if (world.getBlockId(var38, var26 - 1, var39) == Block.Fence.id)
+	                {
+	                    var28 = world.getBlockId(var38, var26 - 1, var39);
+	                }
 
-                    Block.Blocks[var28].onSteppedOn(world, var38, var26, var39, this);
+	                if (horizontalSpeed > (float)nextStepSoundDistance && var28 > 0)
+	                {
+	                    ++nextStepSoundDistance;
+	                    BlockSoundGroup soundGroup = Block.Blocks[var28].soundGroup;
+	                    if (world.getBlockId(var38, var26 + 1, var39) == Block.Snow.id)
+	                    {
+	                        soundGroup = Block.Snow.soundGroup;
+	                        world.playSound(this, soundGroup.StepSound, soundGroup.Volume * 0.15F, soundGroup.Pitch);
+	                    }
+	                    else if (!Block.Blocks[var28].material.IsFluid)
+	                    {
+	                        world.playSound(this, soundGroup.StepSound, soundGroup.Volume * 0.15F, soundGroup.Pitch);
+	                    }
+
+	                    Block.Blocks[var28].onSteppedOn(world, var38, var26, var39, this);
+	                }
                 }
             }
 
-            var38 = MathHelper.floor_double(boundingBox.minX + 0.001D);
-            var26 = MathHelper.floor_double(boundingBox.minY + 0.001D);
-            var39 = MathHelper.floor_double(boundingBox.minZ + 0.001D);
-            var28 = MathHelper.floor_double(boundingBox.maxX - 0.001D);
-            int var40 = MathHelper.floor_double(boundingBox.maxY - 0.001D);
-            int var30 = MathHelper.floor_double(boundingBox.maxZ - 0.001D);
+            var38 = MathHelper.Floor(boundingBox.minX + 0.001D);
+            var26 = MathHelper.Floor(boundingBox.minY + 0.001D);
+            var39 = MathHelper.Floor(boundingBox.minZ + 0.001D);
+            var28 = MathHelper.Floor(boundingBox.maxX - 0.001D);
+            int var40 = MathHelper.Floor(boundingBox.maxY - 0.001D);
+            int var30 = MathHelper.Floor(boundingBox.maxZ - 0.001D);
             if (world.isRegionLoaded(var38, var26, var39, var28, var40, var30))
             {
                 for (int var31 = var38; var31 <= var28; ++var31)
@@ -597,7 +602,7 @@ public abstract class Entity : java.lang.Object
 
             if (var42 && fireTicks > 0)
             {
-                world.playSound(this, "random.fizz", 0.7F, 1.6F + (random.nextFloat() - random.nextFloat()) * 0.4F);
+                world.playSound(this, "random.fizz", 0.7F, 1.6F + (random.NextFloat() - random.NextFloat()) * 0.4F);
                 fireTicks = -fireImmunityTicks;
             }
 
@@ -651,7 +656,7 @@ public abstract class Entity : java.lang.Object
 
     public bool isWet()
     {
-        return inWater || world.isRaining(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z));
+        return inWater || world.isRaining(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z));
     }
 
     public virtual bool isInWater()
@@ -667,9 +672,9 @@ public abstract class Entity : java.lang.Object
     public bool isInFluid(Material var1)
     {
         double var2 = y + (double)getEyeHeight();
-        int var4 = MathHelper.floor_double(x);
-        int var5 = MathHelper.floor_float((float)MathHelper.floor_double(var2));
-        int var6 = MathHelper.floor_double(z);
+        int var4 = MathHelper.Floor(x);
+        int var5 = MathHelper.Floor((float)MathHelper.Floor(var2));
+        int var6 = MathHelper.Floor(z);
         int var7 = world.getBlockId(var4, var5, var6);
         if (var7 != 0 && Block.Blocks[var7].material == var1)
         {
@@ -695,7 +700,7 @@ public abstract class Entity : java.lang.Object
 
     public void moveNonSolid(float strafe, float forward, float speed)
     {
-        float inputLength = MathHelper.sqrt_float(strafe * strafe + forward * forward);
+        float inputLength = MathHelper.Sqrt(strafe * strafe + forward * forward);
         if (inputLength >= 0.01F)
         {
             if (inputLength < 1.0F)
@@ -706,8 +711,8 @@ public abstract class Entity : java.lang.Object
             inputLength = speed / inputLength;
             strafe *= inputLength;
             forward *= inputLength;
-            float sinYaw = MathHelper.sin(yaw * (float)System.Math.PI / 180.0F);
-            float cosYaw = MathHelper.cos(yaw * (float)System.Math.PI / 180.0F);
+            float sinYaw = MathHelper.Sin(yaw * (float)System.Math.PI / 180.0F);
+            float cosYaw = MathHelper.Cos(yaw * (float)System.Math.PI / 180.0F);
             velocityX += (double)(strafe * cosYaw - forward * sinYaw);
             velocityZ += (double)(forward * cosYaw + strafe * sinYaw);
         }
@@ -715,11 +720,11 @@ public abstract class Entity : java.lang.Object
 
     public virtual float getBrightnessAtEyes(float var1)
     {
-        int var2 = MathHelper.floor_double(x);
+        int var2 = MathHelper.Floor(x);
         double var3 = (boundingBox.maxY - boundingBox.minY) * 0.66D;
-        int var5 = MathHelper.floor_double(y - (double)standingEyeHeight + var3);
-        int var6 = MathHelper.floor_double(z);
-        if (world.isRegionLoaded(MathHelper.floor_double(boundingBox.minX), MathHelper.floor_double(boundingBox.minY), MathHelper.floor_double(boundingBox.minZ), MathHelper.floor_double(boundingBox.maxX), MathHelper.floor_double(boundingBox.maxY), MathHelper.floor_double(boundingBox.maxZ)))
+        int var5 = MathHelper.Floor(y - (double)standingEyeHeight + var3);
+        int var6 = MathHelper.Floor(z);
+        if (world.isRegionLoaded(MathHelper.Floor(boundingBox.minX), MathHelper.Floor(boundingBox.minY), MathHelper.Floor(boundingBox.minZ), MathHelper.Floor(boundingBox.maxX), MathHelper.Floor(boundingBox.maxY), MathHelper.Floor(boundingBox.maxZ)))
         {
             float var7 = world.getLuminance(var2, var5, var6);
             if (var7 < minBrightness)
@@ -778,7 +783,7 @@ public abstract class Entity : java.lang.Object
         float var2 = (float)(x - entity.x);
         float var3 = (float)(y - entity.y);
         float var4 = (float)(z - entity.z);
-        return MathHelper.sqrt_float(var2 * var2 + var3 * var3 + var4 * var4);
+        return MathHelper.Sqrt(var2 * var2 + var3 * var3 + var4 * var4);
     }
 
     public double getSquaredDistance(double var1, double var3, double var5)
@@ -794,7 +799,7 @@ public abstract class Entity : java.lang.Object
         double var7 = x - var1;
         double var9 = y - var3;
         double var11 = z - var5;
-        return (double)MathHelper.sqrt_double(var7 * var7 + var9 * var9 + var11 * var11);
+        return (double)MathHelper.Sqrt(var7 * var7 + var9 * var9 + var11 * var11);
     }
 
     public double getSquaredDistance(Entity entity)
@@ -815,10 +820,10 @@ public abstract class Entity : java.lang.Object
         {
             double var2 = entity.x - x;
             double var4 = entity.z - z;
-            double var6 = MathHelper.abs_max(var2, var4);
+            double var6 = Math.Max(Math.Abs(var2), Math.Abs(var4));
             if (var6 >= (double)0.01F)
             {
-                var6 = (double)MathHelper.sqrt_double(var6);
+                var6 = (double)MathHelper.Sqrt(var6);
                 var2 /= var6;
                 var4 /= var6;
                 double var8 = 1.0D / var6;
@@ -910,9 +915,9 @@ public abstract class Entity : java.lang.Object
 
     public void write(NBTTagCompound nbt)
     {
-        nbt.SetTag("Pos", newDoubleNBTList([x, y + (double)cameraOffset, z]));
-        nbt.SetTag("Motion", newDoubleNBTList([velocityX, velocityY, velocityZ]));
-        nbt.SetTag("Rotation", newFloatNBTList([yaw, pitch]));
+        nbt.SetTag("Pos", newDoubleNBTList(x, y + (double)cameraOffset, z));
+        nbt.SetTag("Motion", newDoubleNBTList(velocityX, velocityY, velocityZ));
+        nbt.SetTag("Rotation", newFloatNBTList(yaw, pitch));
         nbt.SetFloat("FallDistance", fallDistance);
         nbt.SetShort("Fire", (short)fireTicks);
         nbt.SetShort("Air", (short)air);
@@ -1031,9 +1036,9 @@ public abstract class Entity : java.lang.Object
             float var2 = ((float)((var1 >> 0) % 2) - 0.5F) * width * 0.9F;
             float var3 = ((float)((var1 >> 1) % 2) - 0.5F) * 0.1F;
             float var4 = ((float)((var1 >> 2) % 2) - 0.5F) * width * 0.9F;
-            int var5 = MathHelper.floor_double(x + (double)var2);
-            int var6 = MathHelper.floor_double(y + (double)getEyeHeight() + (double)var3);
-            int var7 = MathHelper.floor_double(z + (double)var4);
+            int var5 = MathHelper.Floor(x + (double)var2);
+            int var6 = MathHelper.Floor(y + (double)getEyeHeight() + (double)var3);
+            int var7 = MathHelper.Floor(z + (double)var4);
             if (world.shouldSuffocate(var5, var6, var7))
             {
                 return true;
@@ -1296,9 +1301,9 @@ public abstract class Entity : java.lang.Object
 
     protected virtual bool pushOutOfBlocks(double x, double y, double z)
     {
-        int floorX = MathHelper.floor_double(x);
-        int floorY = MathHelper.floor_double(y);
-        int floorZ = MathHelper.floor_double(z);
+        int floorX = MathHelper.Floor(x);
+        int floorY = MathHelper.Floor(y);
+        int floorZ = MathHelper.Floor(z);
         double fracX = x - (double)floorX;
         double fracY = y - (double)floorY;
         double fracZ = z - (double)floorZ;
@@ -1348,7 +1353,7 @@ public abstract class Entity : java.lang.Object
                 pushDirection = 5;
             }
 
-            float pushStrength = random.nextFloat() * 0.2F + 0.1F;
+            float pushStrength = random.NextFloat() * 0.2F + 0.1F;
             if (pushDirection == 0)
             {
                 velocityX = (double)(-pushStrength);

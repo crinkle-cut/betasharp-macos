@@ -1,4 +1,4 @@
-using BetaSharp.Blocks;
+﻿using BetaSharp.Blocks;
 using BetaSharp.Entities;
 using BetaSharp.Items;
 using BetaSharp.Network.Packets;
@@ -21,14 +21,14 @@ public class EntityTrackerEntry : java.lang.Object
     public double velocityX;
     public double velocityY;
     public double velocityZ;
-    public int ticks = 0;
+    public int ticks;
     private double x;
     private double y;
     private double z;
-    private bool isInitialized = false;
+    private bool isInitialized;
     private bool alwaysUpdateVelocity;
-    private int ticksSinceLastDismount = 0;
-    public bool newPlayerDataUpdated = false;
+    private int ticksSinceLastDismount;
+    public bool newPlayerDataUpdated;
     public HashSet<ServerPlayerEntity> listeners = [];
 
     public EntityTrackerEntry(Entity entity, int trackedDistance, int trackedFrequency, bool alwaysUpdateVelocity)
@@ -37,11 +37,11 @@ public class EntityTrackerEntry : java.lang.Object
         this.trackedDistance = trackedDistance;
         trackingFrequency = trackedFrequency;
         this.alwaysUpdateVelocity = alwaysUpdateVelocity;
-        lastX = MathHelper.floor(entity.x * 32.0);
-        lastY = MathHelper.floor(entity.y * 32.0);
-        lastZ = MathHelper.floor(entity.z * 32.0);
-        lastYaw = MathHelper.floor(entity.yaw * 256.0F / 360.0F);
-        lastPitch = MathHelper.floor(entity.pitch * 256.0F / 360.0F);
+        lastX = MathHelper.Floor(entity.x * 32.0);
+        lastY = MathHelper.Floor(entity.y * 32.0);
+        lastZ = MathHelper.Floor(entity.z * 32.0);
+        lastYaw = MathHelper.Floor(entity.yaw * 256.0F / 360.0F);
+        lastPitch = MathHelper.Floor(entity.pitch * 256.0F / 360.0F);
     }
 
     public override bool equals(object obj)
@@ -70,11 +70,11 @@ public class EntityTrackerEntry : java.lang.Object
         ticksSinceLastDismount++;
         if (++ticks % trackingFrequency == 0)
         {
-            int var2 = MathHelper.floor(currentTrackedEntity.x * 32.0);
-            int var3 = MathHelper.floor(currentTrackedEntity.y * 32.0);
-            int var4 = MathHelper.floor(currentTrackedEntity.z * 32.0);
-            int var5 = MathHelper.floor(currentTrackedEntity.yaw * 256.0F / 360.0F);
-            int var6 = MathHelper.floor(currentTrackedEntity.pitch * 256.0F / 360.0F);
+            int var2 = MathHelper.Floor(currentTrackedEntity.x * 32.0);
+            int var3 = MathHelper.Floor(currentTrackedEntity.y * 32.0);
+            int var4 = MathHelper.Floor(currentTrackedEntity.z * 32.0);
+            int var5 = MathHelper.Floor(currentTrackedEntity.yaw * 256.0F / 360.0F);
+            int var6 = MathHelper.Floor(currentTrackedEntity.pitch * 256.0F / 360.0F);
             int var7 = var2 - lastX;
             int var8 = var3 - lastY;
             int var9 = var4 - lastZ;
@@ -227,9 +227,9 @@ public class EntityTrackerEntry : java.lang.Object
                                     new PlayerSleepUpdateS2CPacket(
                                         currentTrackedEntity,
                                         0,
-                                        MathHelper.floor(currentTrackedEntity.x),
-                                        MathHelper.floor(currentTrackedEntity.y),
-                                        MathHelper.floor(currentTrackedEntity.z)
+                                        MathHelper.Floor(currentTrackedEntity.x),
+                                        MathHelper.Floor(currentTrackedEntity.y),
+                                        MathHelper.Floor(currentTrackedEntity.z)
                                     )
                                 );
                         }

@@ -1,4 +1,4 @@
-using BetaSharp.Client.Input;
+﻿using BetaSharp.Client.Input;
 using BetaSharp.Util.Maths;
 using BetaSharp.Worlds.Storage;
 using java.text;
@@ -17,7 +17,7 @@ public class GuiSelectWorld : GuiScreen
     private readonly DateFormat dateFormatter = new SimpleDateFormat();
     protected GuiScreen parentScreen;
     protected string screenTitle = "Select world";
-    private bool selected = false;
+    private bool selected;
     private int selectedWorld;
     private List saveList;
     private GuiWorldSlot worldSlotContainer;
@@ -33,15 +33,15 @@ public class GuiSelectWorld : GuiScreen
         this.parentScreen = parentScreen;
     }
 
-    public override void initGui()
+    public override void InitGui()
     {
-        TranslationStorage translations = TranslationStorage.getInstance();
-        screenTitle = translations.translateKey("selectWorld.title");
-        worldNameHeader = translations.translateKey("selectWorld.world");
+        TranslationStorage translations = TranslationStorage.Instance;
+        screenTitle = translations.TranslateKey("selectWorld.title");
+        worldNameHeader = translations.TranslateKey("selectWorld.world");
         unsupportedFormatMessage = "Unsupported Format!";
         loadSaves();
         worldSlotContainer = new GuiWorldSlot(this);
-        worldSlotContainer.registerScrollButtons(controlList, 4, 5);
+        worldSlotContainer.RegisterScrollButtons(_controlList, 4, 5);
         initButtons();
     }
 
@@ -61,10 +61,10 @@ public class GuiSelectWorld : GuiScreen
     protected string getSaveName(int worldIndex)
     {
         string worldName = ((WorldSaveInfo)saveList.get(worldIndex)).getDisplayName();
-        if (worldName == null || MathHelper.stringNullOrLengthZero(worldName))
+        if (worldName == null || string.IsNullOrEmpty(worldName))
         {
-            TranslationStorage translations = TranslationStorage.getInstance();
-            worldName = translations.translateKey("selectWorld.world") + " " + (worldIndex + 1);
+            TranslationStorage translations = TranslationStorage.Instance;
+            worldName = translations.TranslateKey("selectWorld.world") + " " + (worldIndex + 1);
         }
 
         return worldName;
@@ -72,15 +72,15 @@ public class GuiSelectWorld : GuiScreen
 
     public void initButtons()
     {
-        TranslationStorage translations = TranslationStorage.getInstance();
-        controlList.add(buttonSelect = new GuiButton(BUTTON_SELECT, width / 2 - 154, height - 52, 150, 20, translations.translateKey("selectWorld.select")));
-        controlList.add(buttonRename = new GuiButton(BUTTON_RENAME, width / 2 - 154, height - 28, 70, 20, translations.translateKey("selectWorld.rename")));
-        controlList.add(buttonDelete = new GuiButton(BUTTON_DELETE, width / 2 - 74, height - 28, 70, 20, translations.translateKey("selectWorld.delete")));
-        controlList.add(new GuiButton(BUTTON_CREATE, width / 2 + 4, height - 52, 150, 20, translations.translateKey("selectWorld.create")));
-        controlList.add(new GuiButton(BUTTON_CANCEL, width / 2 + 4, height - 28, 150, 20, translations.translateKey("gui.cancel")));
-        buttonSelect.enabled = false;
-        buttonRename.enabled = false;
-        buttonDelete.enabled = false;
+        TranslationStorage translations = TranslationStorage.Instance;
+        _controlList.Add(buttonSelect = new GuiButton(BUTTON_SELECT, Width / 2 - 154, Height - 52, 150, 20, translations.TranslateKey("selectWorld.select")));
+        _controlList.Add(buttonRename = new GuiButton(BUTTON_RENAME, Width / 2 - 154, Height - 28, 70, 20, translations.TranslateKey("selectWorld.rename")));
+        _controlList.Add(buttonDelete = new GuiButton(BUTTON_DELETE, Width / 2 - 74, Height - 28, 70, 20, translations.TranslateKey("selectWorld.delete")));
+        _controlList.Add(new GuiButton(BUTTON_CREATE, Width / 2 + 4, Height - 52, 150, 20, translations.TranslateKey("selectWorld.create")));
+        _controlList.Add(new GuiButton(BUTTON_CANCEL, Width / 2 + 4, Height - 28, 150, 20, translations.TranslateKey("gui.cancel")));
+        buttonSelect.Enabled = false;
+        buttonRename.Enabled = false;
+        buttonDelete.Enabled = false;
     }
 
     private void deleteWorld(int worldIndex)
@@ -89,21 +89,21 @@ public class GuiSelectWorld : GuiScreen
         if (worldName != null)
         {
             deleting = true;
-            TranslationStorage translations = TranslationStorage.getInstance();
-            string deleteQuestion = translations.translateKey("selectWorld.deleteQuestion");
-            string deleteWarning = "'" + worldName + "' " + translations.translateKey("selectWorld.deleteWarning");
-            string deleteButtonText = translations.translateKey("selectWorld.deleteButton");
-            string cancelButtonText = translations.translateKey("gui.cancel");
+            TranslationStorage translations = TranslationStorage.Instance;
+            string deleteQuestion = translations.TranslateKey("selectWorld.deleteQuestion");
+            string deleteWarning = "'" + worldName + "' " + translations.TranslateKey("selectWorld.deleteWarning");
+            string deleteButtonText = translations.TranslateKey("selectWorld.deleteButton");
+            string cancelButtonText = translations.TranslateKey("gui.cancel");
             GuiYesNo confirmDialog = new(this, deleteQuestion, deleteWarning, deleteButtonText, cancelButtonText, worldIndex);
             mc.displayGuiScreen(confirmDialog);
         }
     }
 
-    protected override void actionPerformed(GuiButton button)
+    protected override void ActionPerformed(GuiButton button)
     {
-        if (button.enabled)
+        if (button.Enabled)
         {
-            switch (button.id)
+            switch (button.Id)
             {
                 case BUTTON_DELETE:
                     deleteWorld(selectedWorld);
@@ -121,7 +121,7 @@ public class GuiSelectWorld : GuiScreen
                     mc.displayGuiScreen(parentScreen);
                     break;
                 default:
-                    worldSlotContainer.actionPerformed(button);
+                    worldSlotContainer.ActionPerformed(button);
                     break;
             }
         }
@@ -140,7 +140,7 @@ public class GuiSelectWorld : GuiScreen
         }
     }
 
-    public override void deleteWorld(bool confirmed, int worldIndex)
+    public override void DeleteWorld(bool confirmed, int worldIndex)
     {
         if (deleting)
         {
@@ -163,14 +163,14 @@ public class GuiSelectWorld : GuiScreen
         loadSaves();
     }
 
-    public override void render(int mouseX, int mouseY, float partialTicks)
+    public override void Render(int mouseX, int mouseY, float partialTicks)
     {
-        worldSlotContainer.drawScreen(mouseX, mouseY, partialTicks);
-        drawCenteredString(fontRenderer, screenTitle, width / 2, 20, 0x00FFFFFF);
-        base.render(mouseX, mouseY, partialTicks);
+        worldSlotContainer.DrawScreen(mouseX, mouseY, partialTicks);
+        DrawCenteredString(FontRenderer, screenTitle, Width / 2, 20, 0xFFFFFF);
+        base.Render(mouseX, mouseY, partialTicks);
     }
 
-    public static List getSize(GuiSelectWorld screen)
+    public static List GetSize(GuiSelectWorld screen)
     {
         return screen.saveList;
     }

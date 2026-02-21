@@ -44,6 +44,7 @@ public class ServerCommandHandler
         Register(PlayerCommands.Heal, "heal [amount]", "heals yourself", "heal");
         Register(PlayerCommands.Clear, "clear", "clears your inventory", "clear");
         Register(PlayerCommands.Teleport, "tp <x> <y> <z> / <p1> <p2>", "teleport", "tp", "teleport");
+        Register(PlayerCommands.MoveToDimension, "tpdim <id> [player]", "teleports to a dimension", "tpdim");
 
         Register(ItemCommands.Give, "give <item> [count]", "gives yourself an item", "give");
 
@@ -51,6 +52,7 @@ public class ServerCommandHandler
         Register(WorldCommands.Weather, "weather <clear|rain|storm>", "sets the weather", "weather");
         Register(WorldCommands.Summon, "summon <entity>", "spawns an entity at your location", "summon", "spawn");
         Register(WorldCommands.KillAll, "killall [filter]", "kills entities by type", "killall");
+        Register(WorldCommands.GameRule, "gamerule [rule name] [value]", "gets or sets a game rule", "gamerule");
 
         Register(ChatCommands.Say, "say <message>", "broadcasts a message", "say");
         Register(ChatCommands.Tell, "tell <player> <message>", "whispers to a player", "tell");

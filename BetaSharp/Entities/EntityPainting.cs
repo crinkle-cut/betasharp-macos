@@ -48,7 +48,7 @@ public class EntityPainting : Entity
 
         if (validPaintings.size() > 0)
         {
-            art = (EnumArt)validPaintings.get(random.nextInt(validPaintings.size()));
+            art = (EnumArt)validPaintings.get(random.NextInt(validPaintings.size()));
         }
 
         setFacing(direction);
@@ -161,7 +161,7 @@ public class EntityPainting : Entity
             if (!canHangOnWall())
             {
                 markDead();
-                world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.PAINTING)));
+                world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.Painting)));
             }
         }
 
@@ -182,25 +182,25 @@ public class EntityPainting : Entity
             int startZ = zPosition;
             if (direction == 0)
             {
-                startX = MathHelper.floor_double(x - (double)((float)art.sizeX / 32.0F));
+                startX = MathHelper.Floor(x - (double)((float)art.sizeX / 32.0F));
             }
 
             if (direction == 1)
             {
-                startZ = MathHelper.floor_double(z - (double)((float)art.sizeX / 32.0F));
+                startZ = MathHelper.Floor(z - (double)((float)art.sizeX / 32.0F));
             }
 
             if (direction == 2)
             {
-                startX = MathHelper.floor_double(x - (double)((float)art.sizeX / 32.0F));
+                startX = MathHelper.Floor(x - (double)((float)art.sizeX / 32.0F));
             }
 
             if (direction == 3)
             {
-                startZ = MathHelper.floor_double(z - (double)((float)art.sizeX / 32.0F));
+                startZ = MathHelper.Floor(z - (double)((float)art.sizeX / 32.0F));
             }
 
-            startY = MathHelper.floor_double(y - (double)((float)art.sizeY / 32.0F));
+            startY = MathHelper.Floor(y - (double)((float)art.sizeY / 32.0F));
 
             int dy;
             for (int dx = 0; dx < widthInBlocks; ++dx)
@@ -249,7 +249,7 @@ public class EntityPainting : Entity
         {
             markDead();
             scheduleVelocityUpdate();
-            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.PAINTING)));
+            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.Painting)));
         }
 
         return true;
@@ -296,7 +296,7 @@ public class EntityPainting : Entity
         if (!world.isRemote && dx * dx + dy * dy + dz * dz > 0.0D)
         {
             markDead();
-            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.PAINTING)));
+            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.Painting)));
         }
 
     }
@@ -306,7 +306,7 @@ public class EntityPainting : Entity
         if (!world.isRemote && dx * dx + dy * dy + dz * dz > 0.0D)
         {
             markDead();
-            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.PAINTING)));
+            world.SpawnEntity(new EntityItem(world, x, y, z, new ItemStack(Item.Painting)));
         }
 
     }

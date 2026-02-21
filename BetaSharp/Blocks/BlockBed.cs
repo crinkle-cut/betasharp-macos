@@ -159,9 +159,9 @@ public class BlockBed : Block
 
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
-        return isHeadOfBed(blockMeta) ? 0 : Item.BED.id;
+        return isHeadOfBed(blockMeta) ? 0 : Item.Bed.id;
     }
 
     private void setDefaultShape()

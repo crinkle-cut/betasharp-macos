@@ -12,16 +12,16 @@ public class BlockRenderer
     private readonly BlockView blockAccess;
     private readonly Tessellator? tessellator;
     private int overrideBlockTexture = -1;
-    private bool flipTexture = false;
-    private bool renderAllFaces = false;
+    private bool flipTexture;
+    private bool renderAllFaces;
     public static bool fancyGrass = true;
     public bool field_31088_b = true;
-    private int field_31087_g = 0;
-    private int field_31086_h = 0;
-    private int field_31085_i = 0;
-    private int field_31084_j = 0;
-    private int field_31083_k = 0;
-    private int field_31082_l = 0;
+    private int field_31087_g;
+    private int field_31086_h;
+    private int field_31085_i;
+    private int field_31084_j;
+    private int field_31083_k;
+    private int field_31082_l;
     private bool enableAO;
     private float lightValueOwn;
     private float aoLightValueXNeg;
@@ -147,6 +147,7 @@ public class BlockRenderer
     private bool renderBlockBed(Block var1, int var2, int var3, int var4)
     {
         Tessellator var5 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         int var6 = blockAccess.getBlockMeta(var2, var3, var4);
         int var7 = BlockBed.getDirection(var6);
         bool var8 = BlockBed.isHeadOfBed(var6);
@@ -163,11 +164,11 @@ public class BlockRenderer
         double var31 = (var27 + 16 - 0.01D) / 256.0D;
         double var33 = (double)(var28 / 256.0F);
         double var35 = (var28 + 16 - 0.01D) / 256.0D;
-        double var37 = var2 + var1.minX;
-        double var39 = var2 + var1.maxX;
-        double var41 = var3 + var1.minY + 0.1875D;
-        double var43 = var4 + var1.minZ;
-        double var45 = var4 + var1.maxZ;
+        double var37 = var2 + blockBB.minX;
+        double var39 = var2 + blockBB.maxX;
+        double var41 = var3 + blockBB.minY + 0.1875D;
+        double var43 = var4 + blockBB.minZ;
+        double var45 = var4 + blockBB.maxZ;
         var5.addVertexWithUV(var37, var41, var45, var29, var35);
         var5.addVertexWithUV(var37, var41, var43, var29, var33);
         var5.addVertexWithUV(var39, var41, var43, var31, var33);
@@ -215,11 +216,11 @@ public class BlockRenderer
             var52 = var34;
         }
 
-        double var54 = var2 + var1.minX;
-        double var56 = var2 + var1.maxX;
-        double var58 = var3 + var1.maxY;
-        double var60 = var4 + var1.minZ;
-        double var62 = var4 + var1.maxZ;
+        double var54 = var2 + blockBB.minX;
+        double var56 = var2 + blockBB.maxX;
+        double var58 = var3 + blockBB.maxY;
+        double var60 = var4 + blockBB.minZ;
+        double var62 = var4 + blockBB.maxZ;
         var5.addVertexWithUV(var56, var58, var62, var46, var50);
         var5.addVertexWithUV(var56, var58, var60, var38, var42);
         var5.addVertexWithUV(var54, var58, var60, var40, var44);
@@ -251,7 +252,7 @@ public class BlockRenderer
         if (var26 != 2 && (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 - 1, 2)))
         {
             var66 = var1.getLuminance(blockAccess, var2, var3, var4 - 1);
-            if (var1.minZ > 0.0D)
+            if (blockBB.minZ > 0.0D)
             {
                 var66 = var25;
             }
@@ -264,7 +265,7 @@ public class BlockRenderer
         if (var26 != 3 && (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 + 1, 3)))
         {
             var66 = var1.getLuminance(blockAccess, var2, var3, var4 + 1);
-            if (var1.maxZ < 1.0D)
+            if (blockBB.maxZ < 1.0D)
             {
                 var66 = var25;
             }
@@ -277,7 +278,7 @@ public class BlockRenderer
         if (var26 != 4 && (renderAllFaces || var1.isSideVisible(blockAccess, var2 - 1, var3, var4, 4)))
         {
             var66 = var1.getLuminance(blockAccess, var2 - 1, var3, var4);
-            if (var1.minX > 0.0D)
+            if (blockBB.minX > 0.0D)
             {
                 var66 = var25;
             }
@@ -290,7 +291,7 @@ public class BlockRenderer
         if (var26 != 5 && (renderAllFaces || var1.isSideVisible(blockAccess, var2 + 1, var3, var4, 5)))
         {
             var66 = var1.getLuminance(blockAccess, var2 + 1, var3, var4);
-            if (var1.maxX < 1.0D)
+            if (blockBB.maxX < 1.0D)
             {
                 var66 = var25;
             }
@@ -1254,39 +1255,39 @@ public class BlockRenderer
                 }
             }
 
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var17, var19);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var15, var21);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var17, var19);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var15, var21);
             var5.setColorOpaque_F(var8, var8, var8);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var17, var19 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var15, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var17, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var15, var21 + 1.0D / 16.0D);
         }
         else if (var35 == 1)
         {
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var17, var19);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var15, var21);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var17, var19);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var15, var21);
             var5.setColorOpaque_F(var8, var8, var8);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var17, var19 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var15, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var17, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var15, var21 + 1.0D / 16.0D);
         }
         else if (var35 == 2)
         {
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var15, var21);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var17, var19);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var15, var21);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var17, var19);
             var5.setColorOpaque_F(var8, var8, var8);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var34, var17, var21 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var32, (double)(var3 + 0.015625F), (double)var33, var15, var21 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var33, var15, var19 + 1.0D / 16.0D);
-            var5.addVertexWithUV((double)var31, (double)(var3 + 0.015625F), (double)var34, var17, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var34, var17, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var32, (double)(var3 + (1 / 64f)), (double)var33, var15, var21 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var33, var15, var19 + 1.0D / 16.0D);
+            var5.addVertexWithUV((double)var31, (double)(var3 + (1 / 64f)), (double)var34, var17, var19 + 1.0D / 16.0D);
         }
 
         if (!blockAccess.shouldSuffocate(var2, var3 + 1, var4))
@@ -1298,57 +1299,57 @@ public class BlockRenderer
             if (blockAccess.shouldSuffocate(var2 - 1, var3, var4) && blockAccess.getBlockId(var2 - 1, var3 + 1, var4) == Block.RedstoneWire.id)
             {
                 var5.setColorOpaque_F(var8 * var10, var8 * var11, var8 * var12);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var19);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), var3 + 0, var4 + 1, var15, var19);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), var3 + 0, var4 + 0, var15, var21);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var21);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var19);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), var3 + 0, var4 + 1, var15, var19);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), var3 + 0, var4 + 0, var15, var21);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var21);
                 var5.setColorOpaque_F(var8, var8, var8);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), var3 + 0, var4 + 1, var15, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), var3 + 0, var4 + 0, var15, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), var3 + 0, var4 + 1, var15, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), var3 + 0, var4 + 0, var15, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var21 + 1.0D / 16.0D);
             }
 
             if (blockAccess.shouldSuffocate(var2 + 1, var3, var4) && blockAccess.getBlockId(var2 + 1, var3 + 1, var4) == Block.RedstoneWire.id)
             {
                 var5.setColorOpaque_F(var8 * var10, var8 * var11, var8 * var12);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), var3 + 0, var4 + 1, var15, var21);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var21);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var19);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), var3 + 0, var4 + 0, var15, var19);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), var3 + 0, var4 + 1, var15, var21);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var21);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var19);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), var3 + 0, var4 + 0, var15, var19);
                 var5.setColorOpaque_F(var8, var8, var8);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), var3 + 0, var4 + 1, var15, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV((double)(var2 + 1 - 0.015625F), var3 + 0, var4 + 0, var15, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), var3 + 0, var4 + 1, var15, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 1, var17, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), (double)(var3 + 1 + 7.0F / 320.0F), var4 + 0, var17, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV((double)(var2 + 1 - (1 / 64f)), var3 + 0, var4 + 0, var15, var19 + 1.0D / 16.0D);
             }
 
             if (blockAccess.shouldSuffocate(var2, var3, var4 - 1) && blockAccess.getBlockId(var2, var3 + 1, var4 - 1) == Block.RedstoneWire.id)
             {
                 var5.setColorOpaque_F(var8 * var10, var8 * var11, var8 * var12);
-                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 0.015625F), var15, var21);
-                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 0.015625F), var17, var21);
-                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 0.015625F), var17, var19);
-                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 0.015625F), var15, var19);
+                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + (1 / 64f)), var15, var21);
+                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + (1 / 64f)), var17, var21);
+                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + (1 / 64f)), var17, var19);
+                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + (1 / 64f)), var15, var19);
                 var5.setColorOpaque_F(var8, var8, var8);
-                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 0.015625F), var15, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 0.015625F), var17, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 0.015625F), var17, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 0.015625F), var15, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + (1 / 64f)), var15, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + (1 / 64f)), var17, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + (1 / 64f)), var17, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + (1 / 64f)), var15, var19 + 1.0D / 16.0D);
             }
 
             if (blockAccess.shouldSuffocate(var2, var3, var4 + 1) && blockAccess.getBlockId(var2, var3 + 1, var4 + 1) == Block.RedstoneWire.id)
             {
                 var5.setColorOpaque_F(var8 * var10, var8 * var11, var8 * var12);
-                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - 0.015625F), var17, var19);
-                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 1 - 0.015625F), var15, var19);
-                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 1 - 0.015625F), var15, var21);
-                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - 0.015625F), var17, var21);
+                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - (1 / 64f)), var17, var19);
+                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 1 - (1 / 64f)), var15, var19);
+                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 1 - (1 / 64f)), var15, var21);
+                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - (1 / 64f)), var17, var21);
                 var5.setColorOpaque_F(var8, var8, var8);
-                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - 0.015625F), var17, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 1 - 0.015625F), var15, var19 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 1 - 0.015625F), var15, var21 + 1.0D / 16.0D);
-                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - 0.015625F), var17, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 1, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - (1 / 64f)), var17, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 1, var3 + 0, (double)(var4 + 1 - (1 / 64f)), var15, var19 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 0, var3 + 0, (double)(var4 + 1 - (1 / 64f)), var15, var21 + 1.0D / 16.0D);
+                var5.addVertexWithUV(var2 + 0, (double)(var3 + 1 + 7.0F / 320.0F), (double)(var4 + 1 - (1 / 64f)), var17, var21 + 1.0D / 16.0D);
             }
         }
 
@@ -1689,13 +1690,20 @@ public class BlockRenderer
     public bool renderBlockFluids(Block var1, int var2, int var3, int var4)
     {
         Tessellator var5 = getTessellator();
+        Box blockBb = var1.BoundingBox;
         int var6 = var1.getColorMultiplier(blockAccess, var2, var3, var4);
         float var7 = (var6 >> 16 & 255) / 255.0F;
         float var8 = (var6 >> 8 & 255) / 255.0F;
         float var9 = (var6 & 255) / 255.0F;
         bool var10 = var1.isSideVisible(blockAccess, var2, var3 + 1, var4, 1);
         bool var11 = var1.isSideVisible(blockAccess, var2, var3 - 1, var4, 0);
-        bool[] var12 = new bool[] { var1.isSideVisible(blockAccess, var2, var3, var4 - 1, 2), var1.isSideVisible(blockAccess, var2, var3, var4 + 1, 3), var1.isSideVisible(blockAccess, var2 - 1, var3, var4, 4), var1.isSideVisible(blockAccess, var2 + 1, var3, var4, 5) };
+        bool[] var12 =
+        [
+            var1.isSideVisible(blockAccess, var2, var3, var4 - 1, 2),
+            var1.isSideVisible(blockAccess, var2, var3, var4 + 1, 3),
+            var1.isSideVisible(blockAccess, var2 - 1, var3, var4, 4),
+            var1.isSideVisible(blockAccess, var2 + 1, var3, var4, 5)
+        ];
         if (!var10 && !var11 && !var12[0] && !var12[1] && !var12[2] && !var12[3])
         {
             return false;
@@ -1744,8 +1752,8 @@ public class BlockRenderer
                     var34 = (double)((var31 + 16) / 256.0F);
                 }
 
-                var36 = MathHelper.sin(var29) * 8.0F / 256.0F;
-                var37 = MathHelper.cos(var29) * 8.0F / 256.0F;
+                var36 = MathHelper.Sin(var29) * 8.0F / 256.0F;
+                var37 = MathHelper.Cos(var29) * 8.0F / 256.0F;
                 var38 = var1.getLuminance(blockAccess, var2, var3, var4);
                 var5.setColorOpaque_F(var15 * var38 * var7, var15 * var38 * var8, var15 * var38 * var9);
                 var5.addVertexWithUV(var2 + 0, (double)(var3 + var24), var4 + 0, var32 - (double)var37 - (double)var36, var34 - (double)var37 + (double)var36);
@@ -1855,8 +1863,8 @@ public class BlockRenderer
                 }
             }
 
-            var1.minY = var18;
-            var1.maxY = var20;
+            blockBb.minY = var18;
+            blockBb.maxY = var20;
             return var13;
         }
     }
@@ -2571,6 +2579,7 @@ public class BlockRenderer
     {
         enableAO = false;
         Tessellator var8 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         bool var9 = false;
         float var10 = 0.5F;
         float var11 = 1.0F;
@@ -2614,7 +2623,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3 + 1, var4, 1))
         {
             var27 = var1.getLuminance(blockAccess, var2, var3 + 1, var4);
-            if (var1.maxY != 1.0D && !var1.material.IsFluid)
+            if (blockBB.maxY != 1.0D && !var1.material.IsFluid)
             {
                 var27 = var26;
             }
@@ -2628,7 +2637,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 - 1, 2))
         {
             var27 = var1.getLuminance(blockAccess, var2, var3, var4 - 1);
-            if (var1.minZ > 0.0D)
+            if (blockBB.minZ > 0.0D)
             {
                 var27 = var26;
             }
@@ -2648,7 +2657,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 + 1, 3))
         {
             var27 = var1.getLuminance(blockAccess, var2, var3, var4 + 1);
-            if (var1.maxZ < 1.0D)
+            if (blockBB.maxZ < 1.0D)
             {
                 var27 = var26;
             }
@@ -2668,7 +2677,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2 - 1, var3, var4, 4))
         {
             var27 = var1.getLuminance(blockAccess, var2 - 1, var3, var4);
-            if (var1.minX > 0.0D)
+            if (blockBB.minX > 0.0D)
             {
                 var27 = var26;
             }
@@ -2688,7 +2697,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2 + 1, var3, var4, 5))
         {
             var27 = var1.getLuminance(blockAccess, var2 + 1, var3, var4);
-            if (var1.maxX < 1.0D)
+            if (blockBB.maxX < 1.0D)
             {
                 var27 = var26;
             }
@@ -2721,6 +2730,7 @@ public class BlockRenderer
     public bool func_1230_b(Block var1, int var2, int var3, int var4, float var5, float var6, float var7)
     {
         Tessellator var8 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         bool var9 = false;
         float var10 = 0.5F;
         float var11 = 1.0F;
@@ -2752,7 +2762,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3 + 1, var4, 1))
         {
             var28 = var1.getLuminance(blockAccess, var2, var3 + 1, var4);
-            if (var1.maxY != 1.0D && !var1.material.IsFluid)
+            if (blockBB.maxY != 1.0D && !var1.material.IsFluid)
             {
                 var28 = var27;
             }
@@ -2765,7 +2775,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 - 1, 2))
         {
             var28 = var1.getLuminance(blockAccess, var2, var3, var4 - 1);
-            if (var1.minZ > 0.0D)
+            if (blockBB.minZ > 0.0D)
             {
                 var28 = var27;
             }
@@ -2780,7 +2790,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2, var3, var4 + 1, 3))
         {
             var28 = var1.getLuminance(blockAccess, var2, var3, var4 + 1);
-            if (var1.maxZ < 1.0D)
+            if (blockBB.maxZ < 1.0D)
             {
                 var28 = var27;
             }
@@ -2795,7 +2805,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2 - 1, var3, var4, 4))
         {
             var28 = var1.getLuminance(blockAccess, var2 - 1, var3, var4);
-            if (var1.minX > 0.0D)
+            if (blockBB.minX > 0.0D)
             {
                 var28 = var27;
             }
@@ -2810,7 +2820,7 @@ public class BlockRenderer
         if (renderAllFaces || var1.isSideVisible(blockAccess, var2 + 1, var3, var4, 5))
         {
             var28 = var1.getLuminance(blockAccess, var2 + 1, var3, var4);
-            if (var1.maxX < 1.0D)
+            if (blockBB.maxX < 1.0D)
             {
                 var28 = var27;
             }
@@ -2941,6 +2951,7 @@ public class BlockRenderer
     {
         Tessellator var5 = getTessellator();
         BlockDoor var6 = (BlockDoor)var1;
+        Box blockBB = var1.BoundingBox;
         bool var7 = false;
         float var8 = 0.5F;
         float var9 = 1.0F;
@@ -2948,7 +2959,7 @@ public class BlockRenderer
         float var11 = 0.6F;
         float var12 = var1.getLuminance(blockAccess, var2, var3, var4);
         float var13 = var1.getLuminance(blockAccess, var2, var3 - 1, var4);
-        if (var6.minY > 0.0D)
+        if (blockBB.minY > 0.0D)
         {
             var13 = var12;
         }
@@ -2962,7 +2973,7 @@ public class BlockRenderer
         renderBottomFace(var1, var2, var3, var4, var1.getTextureId(blockAccess, var2, var3, var4, 0));
         var7 = true;
         var13 = var1.getLuminance(blockAccess, var2, var3 + 1, var4);
-        if (var6.maxY < 1.0D)
+        if (blockBB.maxY < 1.0D)
         {
             var13 = var12;
         }
@@ -2976,7 +2987,7 @@ public class BlockRenderer
         renderTopFace(var1, var2, var3, var4, var1.getTextureId(blockAccess, var2, var3, var4, 1));
         var7 = true;
         var13 = var1.getLuminance(blockAccess, var2, var3, var4 - 1);
-        if (var6.minZ > 0.0D)
+        if (blockBB.minZ > 0.0D)
         {
             var13 = var12;
         }
@@ -2998,7 +3009,7 @@ public class BlockRenderer
         var7 = true;
         flipTexture = false;
         var13 = var1.getLuminance(blockAccess, var2, var3, var4 + 1);
-        if (var6.maxZ < 1.0D)
+        if (blockBB.maxZ < 1.0D)
         {
             var13 = var12;
         }
@@ -3020,7 +3031,7 @@ public class BlockRenderer
         var7 = true;
         flipTexture = false;
         var13 = var1.getLuminance(blockAccess, var2 - 1, var3, var4);
-        if (var6.minX > 0.0D)
+        if (blockBB.minX > 0.0D)
         {
             var13 = var12;
         }
@@ -3042,7 +3053,7 @@ public class BlockRenderer
         var7 = true;
         flipTexture = false;
         var13 = var1.getLuminance(blockAccess, var2 + 1, var3, var4);
-        if (var6.maxX < 1.0D)
+        if (blockBB.maxX < 1.0D)
         {
             var13 = var12;
         }
@@ -3069,6 +3080,7 @@ public class BlockRenderer
     public void renderBottomFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3076,17 +3088,17 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minX * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxX * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + var1.minZ * 16.0D) / 256.0D;
-        double var18 = (var11 + var1.maxZ * 16.0D - 0.01D) / 256.0D;
-        if (var1.minX < 0.0D || var1.maxX > 1.0D)
+        double var12 = (var10 + blockBB.minX * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + blockBB.minZ * 16.0D) / 256.0D;
+        double var18 = (var11 + blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+        if (blockBB.minX < 0.0D || blockBB.maxX > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minZ < 0.0D || var1.maxZ > 1.0D)
+        if (blockBB.minZ < 0.0D || blockBB.maxZ > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3098,10 +3110,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31082_l == 2)
         {
-            var12 = (var10 + var1.minZ * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.maxX * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxZ * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.minX * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minZ * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.maxX * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxZ * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.minX * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3111,10 +3123,10 @@ public class BlockRenderer
         }
         else if (field_31082_l == 1)
         {
-            var12 = (var10 + 16 - var1.maxZ * 16.0D) / 256.0D;
-            var16 = (var11 + var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var18 = (var11 + var1.maxX * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxZ * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.maxX * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3124,21 +3136,21 @@ public class BlockRenderer
         }
         else if (field_31082_l == 3)
         {
-            var12 = (var10 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxX * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.maxZ * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.minX;
-        double var30 = var2 + var1.maxX;
-        double var32 = var4 + var1.minY;
-        double var34 = var6 + var1.minZ;
-        double var36 = var6 + var1.maxZ;
+        double var28 = var2 + blockBB.minX;
+        double var30 = var2 + blockBB.maxX;
+        double var32 = var4 + blockBB.minY;
+        double var34 = var6 + blockBB.minZ;
+        double var36 = var6 + blockBB.maxZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3163,6 +3175,7 @@ public class BlockRenderer
     public void renderTopFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3170,17 +3183,17 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minX * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxX * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + var1.minZ * 16.0D) / 256.0D;
-        double var18 = (var11 + var1.maxZ * 16.0D - 0.01D) / 256.0D;
-        if (var1.minX < 0.0D || var1.maxX > 1.0D)
+        double var12 = (var10 + blockBB.minX * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + blockBB.minZ * 16.0D) / 256.0D;
+        double var18 = (var11 + blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+        if (blockBB.minX < 0.0D || blockBB.maxX > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minZ < 0.0D || var1.maxZ > 1.0D)
+        if (blockBB.minZ < 0.0D || blockBB.maxZ > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3192,10 +3205,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31083_k == 1)
         {
-            var12 = (var10 + var1.minZ * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.maxX * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxZ * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.minX * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minZ * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.maxX * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxZ * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.minX * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3205,10 +3218,10 @@ public class BlockRenderer
         }
         else if (field_31083_k == 2)
         {
-            var12 = (var10 + 16 - var1.maxZ * 16.0D) / 256.0D;
-            var16 = (var11 + var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var18 = (var11 + var1.maxX * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxZ * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.maxX * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3218,21 +3231,21 @@ public class BlockRenderer
         }
         else if (field_31083_k == 3)
         {
-            var12 = (var10 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxX * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.maxZ * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.minX;
-        double var30 = var2 + var1.maxX;
-        double var32 = var4 + var1.maxY;
-        double var34 = var6 + var1.minZ;
-        double var36 = var6 + var1.maxZ;
+        double var28 = var2 + blockBB.minX;
+        double var30 = var2 + blockBB.maxX;
+        double var32 = var4 + blockBB.maxY;
+        double var34 = var6 + blockBB.minZ;
+        double var36 = var6 + blockBB.maxZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3257,6 +3270,7 @@ public class BlockRenderer
     public void renderEastFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3264,10 +3278,10 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minX * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxX * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + 16 - var1.maxY * 16.0D) / 256.0D;
-        double var18 = (var11 + 16 - var1.minY * 16.0D - 0.01D) / 256.0D;
+        double var12 = (var10 + blockBB.minX * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+        double var18 = (var11 + 16 - blockBB.minY * 16.0D - 0.01D) / 256.0D;
         double var20;
         if (flipTexture)
         {
@@ -3276,13 +3290,13 @@ public class BlockRenderer
             var14 = var20;
         }
 
-        if (var1.minX < 0.0D || var1.maxX > 1.0D)
+        if (blockBB.minX < 0.0D || blockBB.maxX > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minY < 0.0D || var1.maxY > 1.0D)
+        if (blockBB.minY < 0.0D || blockBB.maxY > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3294,10 +3308,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31087_g == 2)
         {
-            var12 = (var10 + var1.minY * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.maxX * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minY * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.maxX * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3307,10 +3321,10 @@ public class BlockRenderer
         }
         else if (field_31087_g == 1)
         {
-            var12 = (var10 + 16 - var1.maxY * 16.0D) / 256.0D;
-            var16 = (var11 + var1.maxX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minX * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.maxX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minX * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3320,21 +3334,21 @@ public class BlockRenderer
         }
         else if (field_31087_g == 3)
         {
-            var12 = (var10 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxX * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minY * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minY * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.minX;
-        double var30 = var2 + var1.maxX;
-        double var32 = var4 + var1.minY;
-        double var34 = var4 + var1.maxY;
-        double var36 = var6 + var1.minZ;
+        double var28 = var2 + blockBB.minX;
+        double var30 = var2 + blockBB.maxX;
+        double var32 = var4 + blockBB.minY;
+        double var34 = var4 + blockBB.maxY;
+        double var36 = var6 + blockBB.minZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3359,6 +3373,7 @@ public class BlockRenderer
     public void renderWestFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3366,10 +3381,10 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minX * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxX * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + 16 - var1.maxY * 16.0D) / 256.0D;
-        double var18 = (var11 + 16 - var1.minY * 16.0D - 0.01D) / 256.0D;
+        double var12 = (var10 + blockBB.minX * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+        double var18 = (var11 + 16 - blockBB.minY * 16.0D - 0.01D) / 256.0D;
         double var20;
         if (flipTexture)
         {
@@ -3378,13 +3393,13 @@ public class BlockRenderer
             var14 = var20;
         }
 
-        if (var1.minX < 0.0D || var1.maxX > 1.0D)
+        if (blockBB.minX < 0.0D || blockBB.maxX > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minY < 0.0D || var1.maxY > 1.0D)
+        if (blockBB.minY < 0.0D || blockBB.maxY > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3396,10 +3411,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31086_h == 1)
         {
-            var12 = (var10 + var1.minY * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxY * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.maxX * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minY * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxY * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.maxX * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3409,10 +3424,10 @@ public class BlockRenderer
         }
         else if (field_31086_h == 2)
         {
-            var12 = (var10 + 16 - var1.maxY * 16.0D) / 256.0D;
-            var16 = (var11 + var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.maxX * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.maxX * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3422,21 +3437,21 @@ public class BlockRenderer
         }
         else if (field_31086_h == 3)
         {
-            var12 = (var10 + 16 - var1.minX * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxX * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minY * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minX * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxX * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minY * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.minX;
-        double var30 = var2 + var1.maxX;
-        double var32 = var4 + var1.minY;
-        double var34 = var4 + var1.maxY;
-        double var36 = var6 + var1.maxZ;
+        double var28 = var2 + blockBB.minX;
+        double var30 = var2 + blockBB.maxX;
+        double var32 = var4 + blockBB.minY;
+        double var34 = var4 + blockBB.maxY;
+        double var36 = var6 + blockBB.maxZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3461,6 +3476,7 @@ public class BlockRenderer
     public void renderNorthFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3468,10 +3484,10 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minZ * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxZ * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + 16 - var1.maxY * 16.0D) / 256.0D;
-        double var18 = (var11 + 16 - var1.minY * 16.0D - 0.01D) / 256.0D;
+        double var12 = (var10 + blockBB.minZ * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+        double var18 = (var11 + 16 - blockBB.minY * 16.0D - 0.01D) / 256.0D;
         double var20;
         if (flipTexture)
         {
@@ -3480,13 +3496,13 @@ public class BlockRenderer
             var14 = var20;
         }
 
-        if (var1.minZ < 0.0D || var1.maxZ > 1.0D)
+        if (blockBB.minZ < 0.0D || blockBB.maxZ > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minY < 0.0D || var1.maxY > 1.0D)
+        if (blockBB.minY < 0.0D || blockBB.maxY > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3498,10 +3514,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31084_j == 1)
         {
-            var12 = (var10 + var1.minY * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.maxZ * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.minZ * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minY * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.maxZ * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.minZ * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3511,10 +3527,10 @@ public class BlockRenderer
         }
         else if (field_31084_j == 2)
         {
-            var12 = (var10 + 16 - var1.maxY * 16.0D) / 256.0D;
-            var16 = (var11 + var1.minZ * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.maxZ * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.minZ * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.maxZ * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3524,21 +3540,21 @@ public class BlockRenderer
         }
         else if (field_31084_j == 3)
         {
-            var12 = (var10 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxZ * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minY * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minY * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.minX;
-        double var30 = var4 + var1.minY;
-        double var32 = var4 + var1.maxY;
-        double var34 = var6 + var1.minZ;
-        double var36 = var6 + var1.maxZ;
+        double var28 = var2 + blockBB.minX;
+        double var30 = var4 + blockBB.minY;
+        double var32 = var4 + blockBB.maxY;
+        double var34 = var6 + blockBB.minZ;
+        double var36 = var6 + blockBB.maxZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3563,6 +3579,7 @@ public class BlockRenderer
     public void renderSouthFace(Block var1, double var2, double var4, double var6, int var8)
     {
         Tessellator var9 = getTessellator();
+        Box blockBB = var1.BoundingBox;
         if (overrideBlockTexture >= 0)
         {
             var8 = overrideBlockTexture;
@@ -3570,10 +3587,10 @@ public class BlockRenderer
 
         int var10 = (var8 & 15) << 4;
         int var11 = var8 & 240;
-        double var12 = (var10 + var1.minZ * 16.0D) / 256.0D;
-        double var14 = (var10 + var1.maxZ * 16.0D - 0.01D) / 256.0D;
-        double var16 = (var11 + 16 - var1.maxY * 16.0D) / 256.0D;
-        double var18 = (var11 + 16 - var1.minY * 16.0D - 0.01D) / 256.0D;
+        double var12 = (var10 + blockBB.minZ * 16.0D) / 256.0D;
+        double var14 = (var10 + blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+        double var16 = (var11 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+        double var18 = (var11 + 16 - blockBB.minY * 16.0D - 0.01D) / 256.0D;
         double var20;
         if (flipTexture)
         {
@@ -3582,13 +3599,13 @@ public class BlockRenderer
             var14 = var20;
         }
 
-        if (var1.minZ < 0.0D || var1.maxZ > 1.0D)
+        if (blockBB.minZ < 0.0D || blockBB.maxZ > 1.0D)
         {
             var12 = (double)((var10 + 0.0F) / 256.0F);
             var14 = (double)((var10 + 15.99F) / 256.0F);
         }
 
-        if (var1.minY < 0.0D || var1.maxY > 1.0D)
+        if (blockBB.minY < 0.0D || blockBB.maxY > 1.0D)
         {
             var16 = (double)((var11 + 0.0F) / 256.0F);
             var18 = (double)((var11 + 15.99F) / 256.0F);
@@ -3600,10 +3617,10 @@ public class BlockRenderer
         double var26 = var18;
         if (field_31085_i == 2)
         {
-            var12 = (var10 + var1.minY * 16.0D) / 256.0D;
-            var16 = (var11 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var14 = (var10 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + 16 - var1.maxZ * 16.0D) / 256.0D;
+            var12 = (var10 + blockBB.minY * 16.0D) / 256.0D;
+            var16 = (var11 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var14 = (var10 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + 16 - blockBB.maxZ * 16.0D) / 256.0D;
             var24 = var16;
             var26 = var18;
             var20 = var12;
@@ -3613,10 +3630,10 @@ public class BlockRenderer
         }
         else if (field_31085_i == 1)
         {
-            var12 = (var10 + 16 - var1.maxY * 16.0D) / 256.0D;
-            var16 = (var11 + var1.maxZ * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.minY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minZ * 16.0D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.maxY * 16.0D) / 256.0D;
+            var16 = (var11 + blockBB.maxZ * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.minY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minZ * 16.0D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var12 = var14;
@@ -3626,21 +3643,21 @@ public class BlockRenderer
         }
         else if (field_31085_i == 3)
         {
-            var12 = (var10 + 16 - var1.minZ * 16.0D) / 256.0D;
-            var14 = (var10 + 16 - var1.maxZ * 16.0D - 0.01D) / 256.0D;
-            var16 = (var11 + var1.maxY * 16.0D) / 256.0D;
-            var18 = (var11 + var1.minY * 16.0D - 0.01D) / 256.0D;
+            var12 = (var10 + 16 - blockBB.minZ * 16.0D) / 256.0D;
+            var14 = (var10 + 16 - blockBB.maxZ * 16.0D - 0.01D) / 256.0D;
+            var16 = (var11 + blockBB.maxY * 16.0D) / 256.0D;
+            var18 = (var11 + blockBB.minY * 16.0D - 0.01D) / 256.0D;
             var20 = var14;
             var22 = var12;
             var24 = var16;
             var26 = var18;
         }
 
-        double var28 = var2 + var1.maxX;
-        double var30 = var4 + var1.minY;
-        double var32 = var4 + var1.maxY;
-        double var34 = var6 + var1.minZ;
-        double var36 = var6 + var1.maxZ;
+        double var28 = var2 + blockBB.maxX;
+        double var30 = var4 + blockBB.minY;
+        double var32 = var4 + blockBB.maxY;
+        double var34 = var6 + blockBB.minZ;
+        double var36 = var6 + blockBB.maxZ;
         if (enableAO)
         {
             var9.setColorOpaque_F(colorRedTopLeft, colorGreenTopLeft, colorBlueTopLeft);
@@ -3888,8 +3905,8 @@ public class BlockRenderer
 
     public static void rotateAroundX(ref Vector3D<double> vec, float var1)
     {
-        float var2 = MathHelper.cos(var1);
-        float var3 = MathHelper.sin(var1);
+        float var2 = MathHelper.Cos(var1);
+        float var3 = MathHelper.Sin(var1);
         double var4 = vec.X;
         double var6 = vec.Y * (double)var2 + vec.Z * (double)var3;
         double var8 = vec.Z * (double)var2 - vec.Y * (double)var3;
@@ -3900,8 +3917,8 @@ public class BlockRenderer
 
     private static void rotateAroundY(ref Vector3D<double> vec, float var1)
     {
-        float var2 = MathHelper.cos(var1);
-        float var3 = MathHelper.sin(var1);
+        float var2 = MathHelper.Cos(var1);
+        float var3 = MathHelper.Sin(var1);
         double var4 = vec.X * (double)var2 + vec.Z * (double)var3;
         double var6 = vec.Y;
         double var8 = vec.Z * (double)var2 - vec.X * (double)var3;

@@ -1,5 +1,6 @@
 using BetaSharp.Blocks;
 using BetaSharp.Blocks.Materials;
+using BetaSharp.Util.Maths;
 using BetaSharp.Util.Maths.Noise;
 using BetaSharp.Worlds.Biomes;
 using BetaSharp.Worlds.Chunks;
@@ -11,12 +12,12 @@ namespace BetaSharp.Worlds.Gen.Chunks;
 public class OverworldChunkGenerator : ChunkSource
 {
 
-    private readonly java.util.Random random;
+    private readonly JavaRandom random;
     private readonly OctavePerlinNoiseSampler minLimitPerlinNoise;
     private readonly OctavePerlinNoiseSampler maxLimitPerlinNoise;
-    private readonly OctavePerlinNoiseSampler perlinNoise1;
-    private readonly OctavePerlinNoiseSampler perlinNoise2;
-    private readonly OctavePerlinNoiseSampler perlinNoise3;
+    private readonly OctavePerlinNoiseSampler selectorNoise;
+    private readonly OctavePerlinNoiseSampler sandGravelNoise;
+    private readonly OctavePerlinNoiseSampler depthNoise;
     public OctavePerlinNoiseSampler floatingIslandScale;
     public OctavePerlinNoiseSampler floatingIslandNoise;
     public OctavePerlinNoiseSampler forestNoise;
@@ -27,7 +28,7 @@ public class OverworldChunkGenerator : ChunkSource
     private double[] depthBuffer = new double[256];
     private readonly Carver cave = new CaveCarver();
     private Biome[] biomes;
-    double[] perlinNoiseBuffer;
+    double[] selectorNoiseBuffer;
     double[] minLimitPerlinNoiseBuffer;
     double[] maxLimitPerlinNoiseBuffer;
     double[] scaleNoiseBuffer;
@@ -37,92 +38,113 @@ public class OverworldChunkGenerator : ChunkSource
     public OverworldChunkGenerator(World world, long seed)
     {
         this.world = world;
-        random = new java.util.Random(seed);
+        random = new JavaRandom(seed);
         minLimitPerlinNoise = new OctavePerlinNoiseSampler(random, 16);
         maxLimitPerlinNoise = new OctavePerlinNoiseSampler(random, 16);
-        perlinNoise1 = new OctavePerlinNoiseSampler(random, 8);
-        perlinNoise2 = new OctavePerlinNoiseSampler(random, 4);
-        perlinNoise3 = new OctavePerlinNoiseSampler(random, 4);
+        selectorNoise = new OctavePerlinNoiseSampler(random, 8);
+        sandGravelNoise = new OctavePerlinNoiseSampler(random, 4);
+        depthNoise = new OctavePerlinNoiseSampler(random, 4);
         floatingIslandScale = new OctavePerlinNoiseSampler(random, 10);
         floatingIslandNoise = new OctavePerlinNoiseSampler(random, 16);
         forestNoise = new OctavePerlinNoiseSampler(random, 8);
     }
 
-    public void buildTerrain(int chunkX, int chunkZ, byte[] blocks, Biome[] biomes, double[] temperatures)
+    /// <summary>
+    /// Generate the base terrain
+    /// </summary>
+    /// <param name="chunkX">X-Coordinate of this chunk</param>
+    /// <param name="chunkZ">Z-Coordinate of this chunk</param>
+    /// <param name="blocks">1D Array of Blocks within this chunk</param>
+    /// <param name="biomes">1D Array of Biome values within this chunk</param>
+    /// <param name="temperatures">1D Array of Temperature values within this chunk</param>
+    /// <returns>The interpolated result.</returns>
+    public void BuildTerrain(int chunkX, int chunkZ, byte[] blocks, Biome[] biomes, double[] temperatures)
     {
-        byte var6 = 4;
-        byte var7 = 64;
-        int var8 = var6 + 1;
-        byte var9 = 17;
-        int var10 = var6 + 1;
-        heightMap = generateHeightMap(heightMap, chunkX * var6, 0, chunkZ * var6, var8, var9, var10);
+        // TODO: Replace some of these with global-constants
+        //const byte vertScale = 8; // ChunkHeight / 8 = 16 (?)
+        const byte horiScale = 4; // ChunkWidth / 4 = 4
+        const byte halfChunkHeight = 64;
+        const int  xMax = horiScale + 1; // ChunkWidth / 4 + 1
+        const byte yMax = 17; // ChunkHeight / 8 + 1
+        const int  zMax = horiScale + 1; // ChunkWidth / 4 + 1
 
-        for (int var11 = 0; var11 < var6; ++var11)
+	    // Generate 4x16x4 low resolution noise map
+        heightMap = GenerateHeightMap(heightMap, chunkX * horiScale, 0, chunkZ * horiScale, xMax, yMax, zMax);
+
+	    // Terrain noise is trilinearly interpolated and only sampled every 4 blocks
+        for (int sampleX = 0; sampleX < horiScale; ++sampleX)
         {
-            for (int var12 = 0; var12 < var6; ++var12)
+            for (int sampleZ = 0; sampleZ < horiScale; ++sampleZ)
             {
-                for (int var13 = 0; var13 < 16; ++var13)
+                // Chunk Height / 8 = 16
+                for (int sampleY = 0; sampleY < 16; ++sampleY)
                 {
-                    double var14 = 0.125D;
-                    double var16 = heightMap[((var11 + 0) * var10 + var12 + 0) * var9 + var13 + 0];
-                    double var18 = heightMap[((var11 + 0) * var10 + var12 + 1) * var9 + var13 + 0];
-                    double var20 = heightMap[((var11 + 1) * var10 + var12 + 0) * var9 + var13 + 0];
-                    double var22 = heightMap[((var11 + 1) * var10 + var12 + 1) * var9 + var13 + 0];
-                    double var24 = (heightMap[((var11 + 0) * var10 + var12 + 0) * var9 + var13 + 1] - var16) * var14;
-                    double var26 = (heightMap[((var11 + 0) * var10 + var12 + 1) * var9 + var13 + 1] - var18) * var14;
-                    double var28 = (heightMap[((var11 + 1) * var10 + var12 + 0) * var9 + var13 + 1] - var20) * var14;
-                    double var30 = (heightMap[((var11 + 1) * var10 + var12 + 1) * var9 + var13 + 1] - var22) * var14;
+                    const double verticalLerpStep = 0.125D;
+                    double corner000 = heightMap[((sampleX + 0) * zMax + sampleZ + 0) * yMax + sampleY + 0];
+                    double corner010 = heightMap[((sampleX + 0) * zMax + sampleZ + 1) * yMax + sampleY + 0];
+                    double corner100 = heightMap[((sampleX + 1) * zMax + sampleZ + 0) * yMax + sampleY + 0];
+                    double corner110 = heightMap[((sampleX + 1) * zMax + sampleZ + 1) * yMax + sampleY + 0];
+                    double corner001 = (heightMap[((sampleX + 0) * zMax + sampleZ + 0) * yMax + sampleY + 1] - corner000) * verticalLerpStep;
+                    double corner011 = (heightMap[((sampleX + 0) * zMax + sampleZ + 1) * yMax + sampleY + 1] - corner010) * verticalLerpStep;
+                    double corner101 = (heightMap[((sampleX + 1) * zMax + sampleZ + 0) * yMax + sampleY + 1] - corner100) * verticalLerpStep;
+                    double corner111 = (heightMap[((sampleX + 1) * zMax + sampleZ + 1) * yMax + sampleY + 1] - corner110) * verticalLerpStep;
 
-                    for (int var32 = 0; var32 < 8; ++var32)
+				    // Interpolate the 1/4th scale noise
+                    for (int subY = 0; subY < 8; ++subY)
                     {
-                        double var33 = 0.25D;
-                        double var35 = var16;
-                        double var37 = var18;
-                        double var39 = (var20 - var16) * var33;
-                        double var41 = (var22 - var18) * var33;
+                        const double horizontalLerpStep = 0.25D; // 1.0 / horiScale
+                        double terrainX0 = corner000;
+                        double terrainX1 = corner010;
+                        double terrainStepX0 = (corner100 - corner000) * horizontalLerpStep;
+                        double terrainStepX1 = (corner110 - corner010) * horizontalLerpStep;
 
-                        for (int var43 = 0; var43 < 4; ++var43)
+                        for (int subX = 0; subX < 4; ++subX)
                         {
-                            int var44 = var43 + var11 * 4 << 11 | 0 + var12 * 4 << 7 | var13 * 8 + var32;
-                            short var45 = 128;
-                            double var46 = 0.25D;
-                            double var48 = var35;
-                            double var50 = (var37 - var35) * var46;
+                            int blockIndex = (((subX + sampleX * 4) << 11) | ((sampleZ * 4) << 7) | ((sampleY * 8) + subY));
+                            const short chunkHeight = 128; // Chunk Height
+                            double terrainDensity = terrainX0;
+                            double densityStepZ = (terrainX1 - terrainX0) * horizontalLerpStep;
 
-                            for (int var52 = 0; var52 < 4; ++var52)
+                            for (int subZ = 0; subZ < 4; ++subZ)
                             {
-                                double var53 = temperatures[(var11 * 4 + var43) * 16 + var12 * 4 + var52];
-                                int var55 = 0;
-                                if (var13 * 8 + var32 < var7)
+                                // Here the actual block is determined
+                                // Default to air block
+                                int blockType = 0;
+                                
+							    // If water is too cold, turn into ice
+                                double temp = temperatures[(sampleX * 4 + subX) * 16 + sampleZ * 4 + subZ];
+                                if (sampleY * 8 + subY < halfChunkHeight)
                                 {
-                                    if (var53 < 0.5D && var13 * 8 + var32 >= var7 - 1)
+                                    if (temp < 0.5D && sampleY * 8 + subY >= halfChunkHeight - 1)
                                     {
-                                        var55 = Block.Ice.id;
+                                        blockType = Block.Ice.id;
                                     }
                                     else
                                     {
-                                        var55 = Block.Water.id;
+                                        blockType = Block.Water.id;
                                     }
                                 }
 
-                                if (var48 > 0.0D)
+                                // If the terrain density is above 0.0,
+                                // turn it into stone
+                                if (terrainDensity > 0.0D)
                                 {
-                                    var55 = Block.Stone.id;
+                                    blockType = Block.Stone.id;
                                 }
 
-                                blocks[var44] = (byte)var55;
-                                var44 += var45;
-                                var48 += var50;
+                                blocks[blockIndex] = (byte)blockType;
+                                blockIndex += chunkHeight;
+                                terrainDensity += densityStepZ;
                             }
 
-                            var35 += var39;
-                            var37 += var41;
+                            terrainX0 += terrainStepX0;
+                            terrainX1 += terrainStepX1;
                         }
 
-                        var16 += var24;
-                        var18 += var26;
-                        var20 += var28;
-                        var22 += var30;
+                        corner000 += corner001;
+                        corner010 += corner011;
+                        corner100 += corner101;
+                        corner110 += corner111;
                     }
                 }
             }
@@ -130,97 +152,105 @@ public class OverworldChunkGenerator : ChunkSource
 
     }
 
-    public void buildSurfaces(int chunkX, int chunkZ, byte[] blocks, Biome[] biomes)
+    /// <summary>
+    /// Generate the base terrain
+    /// </summary>
+    /// <param name="chunkX">X-Coordinate of this chunk</param>
+    /// <param name="chunkZ">Z-Coordinate of this chunk</param>
+    /// <param name="blocks">1D Array of Blocks within this chunk</param>
+    /// <param name="biomes">1D Array of Biome values within this chunk</param>
+    /// <returns>The interpolated result.</returns>
+    public void BuildSurfaces(int chunkX, int chunkZ, byte[] blocks, Biome[] biomes)
     {
-        byte var5 = 64;
-        double var6 = 1.0D / 32.0D;
-        sandBuffer = perlinNoise2.create(sandBuffer, chunkX * 16, chunkZ * 16, 0.0D, 16, 16, 1, var6, var6, 1.0D);
-        gravelBuffer = perlinNoise2.create(gravelBuffer, chunkX * 16, 109.0134D, chunkZ * 16, 16, 1, 16, var6, 1.0D, var6);
-        depthBuffer = perlinNoise3.create(depthBuffer, chunkX * 16, chunkZ * 16, 0.0D, 16, 16, 1, var6 * 2.0D, var6 * 2.0D, var6 * 2.0D);
+        byte blockZ = 64;
+        double chunkBiome = 1.0D / 32.0D;
+        sandBuffer = sandGravelNoise.create(sandBuffer, chunkX * 16, chunkZ * 16, 0.0D, 16, 16, 1, chunkBiome, chunkBiome, 1.0D);
+        gravelBuffer = sandGravelNoise.create(gravelBuffer, chunkX * 16, 109.0134D, chunkZ * 16, 16, 1, 16, chunkBiome, 1.0D, chunkBiome);
+        depthBuffer = depthNoise.create(depthBuffer, chunkX * 16, chunkZ * 16, 0.0D, 16, 16, 1, chunkBiome * 2.0D, chunkBiome * 2.0D, chunkBiome * 2.0D);
 
-        for (int var8 = 0; var8 < 16; ++var8)
+        for (int horizontalScale = 0; horizontalScale < 16; ++horizontalScale)
         {
-            for (int var9 = 0; var9 < 16; ++var9)
+            for (int zOffset = 0; zOffset < 16; ++zOffset)
             {
-                Biome var10 = biomes[var8 + var9 * 16];
-                bool var11 = sandBuffer[var8 + var9 * 16] + random.nextDouble() * 0.2D > 0.0D;
-                bool var12 = gravelBuffer[var8 + var9 * 16] + random.nextDouble() * 0.2D > 3.0D;
-                int var13 = (int)(depthBuffer[var8 + var9 * 16] / 3.0D + 3.0D + random.nextDouble() * 0.25D);
-                int var14 = -1;
-                byte var15 = var10.TopBlockId;
-                byte var16 = var10.SoilBlockId;
+                Biome verticalScale = biomes[horizontalScale + zOffset * 16];
+                bool fraction = sandBuffer[horizontalScale + zOffset * 16] + random.NextDouble() * 0.2D > 0.0D;
+                bool temperatureBuffer = gravelBuffer[horizontalScale + zOffset * 16] + random.NextDouble() * 0.2D > 3.0D;
+                int featureX = (int)(depthBuffer[horizontalScale + zOffset * 16] / 3.0D + 3.0D + random.NextDouble() * 0.25D);
+                int featureY = -1;
+                byte featureZ = verticalScale.TopBlockId;
+                byte scaleFraction = verticalScale.SoilBlockId;
 
-                for (int var17 = 127; var17 >= 0; --var17)
+                for (int iX = 127; iX >= 0; --iX)
                 {
-                    int var18 = (var9 * 16 + var8) * 128 + var17;
-                    if (var17 <= 0 + random.nextInt(5))
+                    int treeFeature = (zOffset * 16 + horizontalScale) * 128 + iX;
+                    if (iX <= 0 + random.NextInt(5))
                     {
-                        blocks[var18] = (byte)Block.Bedrock.id;
+                        blocks[treeFeature] = (byte)Block.Bedrock.id;
                     }
                     else
                     {
-                        byte var19 = blocks[var18];
-                        if (var19 == 0)
+                        byte z = blocks[treeFeature];
+                        if (z == 0)
                         {
-                            var14 = -1;
+                            featureY = -1;
                         }
-                        else if (var19 == Block.Stone.id)
+                        else if (z == Block.Stone.id)
                         {
-                            if (var14 == -1)
+                            if (featureY == -1)
                             {
-                                if (var13 <= 0)
+                                if (featureX <= 0)
                                 {
-                                    var15 = 0;
-                                    var16 = (byte)Block.Stone.id;
+                                    featureZ = 0;
+                                    scaleFraction = (byte)Block.Stone.id;
                                 }
-                                else if (var17 >= var5 - 4 && var17 <= var5 + 1)
+                                else if (iX >= blockZ - 4 && iX <= blockZ + 1)
                                 {
-                                    var15 = var10.TopBlockId;
-                                    var16 = var10.SoilBlockId;
-                                    if (var12)
+                                    featureZ = verticalScale.TopBlockId;
+                                    scaleFraction = verticalScale.SoilBlockId;
+                                    if (temperatureBuffer)
                                     {
-                                        var15 = 0;
+                                        featureZ = 0;
                                     }
 
-                                    if (var12)
+                                    if (temperatureBuffer)
                                     {
-                                        var16 = (byte)Block.Gravel.id;
+                                        scaleFraction = (byte)Block.Gravel.id;
                                     }
 
-                                    if (var11)
+                                    if (fraction)
                                     {
-                                        var15 = (byte)Block.Sand.id;
+                                        featureZ = (byte)Block.Sand.id;
                                     }
 
-                                    if (var11)
+                                    if (fraction)
                                     {
-                                        var16 = (byte)Block.Sand.id;
+                                        scaleFraction = (byte)Block.Sand.id;
                                     }
-                                }
-
-                                if (var17 < var5 && var15 == 0)
-                                {
-                                    var15 = (byte)Block.Water.id;
                                 }
 
-                                var14 = var13;
-                                if (var17 >= var5 - 1)
+                                if (iX < blockZ && featureZ == 0)
                                 {
-                                    blocks[var18] = var15;
+                                    featureZ = (byte)Block.Water.id;
+                                }
+
+                                featureY = featureX;
+                                if (iX >= blockZ - 1)
+                                {
+                                    blocks[treeFeature] = featureZ;
                                 }
                                 else
                                 {
-                                    blocks[var18] = var16;
+                                    blocks[treeFeature] = scaleFraction;
                                 }
                             }
-                            else if (var14 > 0)
+                            else if (featureY > 0)
                             {
-                                --var14;
-                                blocks[var18] = var16;
-                                if (var14 == 0 && var16 == Block.Sand.id)
+                                --featureY;
+                                blocks[treeFeature] = scaleFraction;
+                                if (featureY == 0 && scaleFraction == Block.Sand.id)
                                 {
-                                    var14 = random.nextInt(4);
-                                    var16 = (byte)Block.Sandstone.id;
+                                    featureY = random.NextInt(4);
+                                    scaleFraction = (byte)Block.Sandstone.id;
                                 }
                             }
                         }
@@ -231,138 +261,171 @@ public class OverworldChunkGenerator : ChunkSource
 
     }
 
-    public Chunk loadChunk(int chunkX, int chunkZ)
+    public Chunk LoadChunk(int chunkX, int chunkZ)
     {
-        return getChunk(chunkX, chunkZ);
+        return GetChunk(chunkX, chunkZ);
     }
 
-    public Chunk getChunk(int chunkX, int chunkZ)
+    /// <summary>
+    /// Generates a chunk at the given coordinates. The chunk is generated by first creating a low-resolution height map, then interpolating it to determine the base terrain, and finally carving caves and adding features to it.
+    /// </summary>
+    /// <param name="chunkX">The x-coordinate of the chunk</param>
+    /// <param name="chunkZ">The z-coordinate of the chunk</param>
+    /// <returns>The generated chunk</returns>
+    public Chunk GetChunk(int chunkX, int chunkZ)
     {
-        random.setSeed(chunkX * 341873128712L + chunkZ * 132897987541L);
-        byte[] var3 = new byte[-java.lang.Short.MIN_VALUE];
-        Chunk var4 = new Chunk(world, var3, chunkX, chunkZ);
+        random.SetSeed(chunkX * 341873128712L + chunkZ * 132897987541L);
+        byte[] blocks = new byte[-java.lang.Short.MIN_VALUE];
+        Chunk chunk = new Chunk(world, blocks, chunkX, chunkZ);
         biomes = world.getBiomeSource().GetBiomesInArea(biomes, chunkX * 16, chunkZ * 16, 16, 16);
-        double[] var5 = world.getBiomeSource().TemperatureMap;
-        buildTerrain(chunkX, chunkZ, var3, biomes, var5);
-        buildSurfaces(chunkX, chunkZ, var3, biomes);
-        cave.carve(this, world, chunkX, chunkZ, var3);
-        var4.populateHeightMap();
-        return var4;
+        double[] temperatureMap = world.getBiomeSource().TemperatureMap;
+        BuildTerrain(chunkX, chunkZ, blocks, biomes, temperatureMap);
+        BuildSurfaces(chunkX, chunkZ, blocks, biomes);
+        cave.carve(this, world, chunkX, chunkZ, blocks);
+        chunk.populateHeightMap();
+        return chunk;
     }
 
-    private double[] generateHeightMap(double[] heightMap, int x, int y, int z, int sizeX, int sizeY, int sizeZ)
+    /**
+    * @brief Generates the low-resolution height map that is used to generate the terrain of the overworld. The height map is generated by sampling 5 different noise maps and applying biome-dependent modifications to them.
+    * 
+    * @param terrainMap The terrain map that the scaled-down terrain values will be written to
+    * @param chunkPos The x,y,z coordinate of the sub-chunk
+    * @param max Defines the area of the terrainMap
+    */
+    /// <summary>
+    /// Generates the low-resolution height map that is used to generate the terrain of the overworld. The height map is generated by sampling 5 different noise maps and applying biome-dependent modifications to them.
+    /// </summary>
+    /// <param name="heightMap">The terrain map that the scaled-down terrain values will be written to</param>
+    /// <param name="x">The x-coordinate of the sub-chunk</param>
+    /// <param name="y">The y-coordinate of the sub-chunk</param>
+    /// <param name="z">The z-coordinate of the sub-chunk</param>
+    /// <param name="sizeX">The x-size of the terrainMap</param>
+    /// <param name="sizeY">The y-size of the terrainMap</param>
+    /// <param name="sizeZ">The z-size of the terrainMap</param>
+    /// <returns>The generated height map</returns>
+    private double[] GenerateHeightMap(double[] heightMap, int x, int y, int z, int sizeX, int sizeY, int sizeZ)
     {
         if (heightMap == null)
         {
             heightMap = new double[sizeX * sizeY * sizeZ];
         }
 
-        double var8 = 684.412D;
-        double var10 = 684.412D;
-        double[] var12 = world.getBiomeSource().TemperatureMap;
-        double[] var13 = world.getBiomeSource().DownfallMap;
+        double horizontalScale = 684.412D;
+        double verticalScale = 684.412D;
+        double[] temperatureBuffer = world.getBiomeSource().TemperatureMap;
+        double[] downfallBuffer = world.getBiomeSource().DownfallMap;
         scaleNoiseBuffer = floatingIslandScale.create(scaleNoiseBuffer, x, z, sizeX, sizeZ, 1.121D, 1.121D, 0.5D);
         depthNoiseBuffer = floatingIslandNoise.create(depthNoiseBuffer, x, z, sizeX, sizeZ, 200.0D, 200.0D, 0.5D);
-        perlinNoiseBuffer = perlinNoise1.create(perlinNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, var8 / 80.0D, var10 / 160.0D, var8 / 80.0D);
-        minLimitPerlinNoiseBuffer = minLimitPerlinNoise.create(minLimitPerlinNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, var8, var10, var8);
-        maxLimitPerlinNoiseBuffer = maxLimitPerlinNoise.create(maxLimitPerlinNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, var8, var10, var8);
-        int var14 = 0;
-        int var15 = 0;
-        int var16 = 16 / sizeX;
+        selectorNoiseBuffer = selectorNoise.create(selectorNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, horizontalScale / 80.0D, verticalScale / 160.0D, horizontalScale / 80.0D);
+        minLimitPerlinNoiseBuffer = minLimitPerlinNoise.create(minLimitPerlinNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, horizontalScale, verticalScale, horizontalScale);
+        maxLimitPerlinNoiseBuffer = maxLimitPerlinNoise.create(maxLimitPerlinNoiseBuffer, x, y, z, sizeX, sizeY, sizeZ, horizontalScale, verticalScale, horizontalScale);
+        // Used to iterate 3D noise maps (low, high, selector)
+        int xyzIndex = 0;
+        // Used to iterate 2D Noise maps (depth, continentalness)
+        int xzIndex = 0;
+        int scaleFraction = 16 / sizeX;
 
-        for (int var17 = 0; var17 < sizeX; ++var17)
+        for (int iX = 0; iX < sizeX; ++iX)
         {
-            int var18 = var17 * var16 + var16 / 2;
+            int sampleX = iX * scaleFraction + scaleFraction / 2;
 
-            for (int var19 = 0; var19 < sizeZ; ++var19)
+            for (int iZ = 0; iZ < sizeZ; ++iZ)
             {
-                int var20 = var19 * var16 + var16 / 2;
-                double var21 = var12[var18 * 16 + var20];
-                double var23 = var13[var18 * 16 + var20] * var21;
-                double var25 = 1.0D - var23;
-                var25 *= var25;
-                var25 *= var25;
-                var25 = 1.0D - var25;
-                double var27 = (scaleNoiseBuffer[var15] + 256.0D) / 512.0D;
-                var27 *= var25;
-                if (var27 > 1.0D)
+                // Sample 2D noises
+                int sampleZ = iZ * scaleFraction + scaleFraction / 2;
+                // Apply biome-noise-dependent variety
+                double temperatureSample = temperatureBuffer[sampleX * 16 + sampleZ];
+                double downfallSample = downfallBuffer[sampleX * 16 + sampleZ] * temperatureSample;
+                downfallSample = 1.0D - downfallSample;
+                downfallSample *= downfallSample;
+                downfallSample *= downfallSample;
+                downfallSample = 1.0D - downfallSample;
+			    // Sample scale/contientalness noise
+                double scaleNoiseSample = (scaleNoiseBuffer[xzIndex] + 256.0D) / 512.0D;
+                scaleNoiseSample *= downfallSample;
+                if (scaleNoiseSample > 1.0D)
                 {
-                    var27 = 1.0D;
+                    scaleNoiseSample = 1.0D;
+                }
+			    // Sample depth noise
+                double depthNoiseSample = depthNoiseBuffer[xzIndex] / 8000.0D;
+                if (depthNoiseSample < 0.0D)
+                {
+                    depthNoiseSample = -depthNoiseSample * 0.3D;
                 }
 
-                double var29 = depthNoiseBuffer[var15] / 8000.0D;
-                if (var29 < 0.0D)
+                depthNoiseSample = depthNoiseSample * 3.0D - 2.0D;
+                if (depthNoiseSample < 0.0D)
                 {
-                    var29 = -var29 * 0.3D;
-                }
-
-                var29 = var29 * 3.0D - 2.0D;
-                if (var29 < 0.0D)
-                {
-                    var29 /= 2.0D;
-                    if (var29 < -1.0D)
+                    depthNoiseSample /= 2.0D;
+                    if (depthNoiseSample < -1.0D)
                     {
-                        var29 = -1.0D;
+                        depthNoiseSample = -1.0D;
                     }
 
-                    var29 /= 1.4D;
-                    var29 /= 2.0D;
-                    var27 = 0.0D;
+                    depthNoiseSample /= 1.4D;
+                    depthNoiseSample /= 2.0D;
+                    scaleNoiseSample = 0.0D;
                 }
                 else
                 {
-                    if (var29 > 1.0D)
+                    if (depthNoiseSample > 1.0D)
                     {
-                        var29 = 1.0D;
+                        depthNoiseSample = 1.0D;
                     }
 
-                    var29 /= 8.0D;
+                    depthNoiseSample /= 8.0D;
                 }
 
-                if (var27 < 0.0D)
+                if (scaleNoiseSample < 0.0D)
                 {
-                    var27 = 0.0D;
+                    scaleNoiseSample = 0.0D;
                 }
 
-                var27 += 0.5D;
-                var29 = var29 * sizeY / 16.0D;
-                double var31 = sizeY / 2.0D + var29 * 4.0D;
-                ++var15;
+                scaleNoiseSample += 0.5D;
+                depthNoiseSample = depthNoiseSample * sizeY / 16.0D;
+                double elevationOffset = sizeY / 2.0D + depthNoiseSample * 4.0D;
+                ++xzIndex;
 
-                for (int var33 = 0; var33 < sizeY; ++var33)
+                for (int iY = 0; iY < sizeY; ++iY)
                 {
-                    double var34 = 0.0D;
-                    double var36 = (var33 - var31) * 12.0D / var27;
-                    if (var36 < 0.0D)
+                    double terrainDensity = 0.0D;
+                    double densityOffset = (iY - elevationOffset) * 12.0D / scaleNoiseSample;
+                    if (densityOffset < 0.0D)
                     {
-                        var36 *= 4.0D;
+                        densityOffset *= 4.0D;
                     }
 
-                    double var38 = minLimitPerlinNoiseBuffer[var14] / 512.0D;
-                    double var40 = maxLimitPerlinNoiseBuffer[var14] / 512.0D;
-                    double var42 = (perlinNoiseBuffer[var14] / 10.0D + 1.0D) / 2.0D;
-                    if (var42 < 0.0D)
+				    // Sample low noise
+                    double lowNoiseSample = minLimitPerlinNoiseBuffer[xyzIndex] / 512.0D;
+				    // Sample high noise
+                    double highNoiseSample = maxLimitPerlinNoiseBuffer[xyzIndex] / 512.0D;
+				    // Sample selector noise
+                    double selectorNoiseSample = (selectorNoiseBuffer[xyzIndex] / 10.0D + 1.0D) / 2.0D;
+                    if (selectorNoiseSample < 0.0D)
                     {
-                        var34 = var38;
+                        terrainDensity = lowNoiseSample;
                     }
-                    else if (var42 > 1.0D)
+                    else if (selectorNoiseSample > 1.0D)
                     {
-                        var34 = var40;
+                        terrainDensity = highNoiseSample;
                     }
                     else
                     {
-                        var34 = var38 + (var40 - var38) * var42;
+                        terrainDensity = lowNoiseSample + (highNoiseSample - lowNoiseSample) * selectorNoiseSample;
                     }
 
-                    var34 -= var36;
-                    if (var33 > sizeY - 4)
+                    terrainDensity -= densityOffset;
+				    // Reduce density towards max height
+                    if (iY > sizeY - 4)
                     {
-                        double var44 = (double)((var33 - (sizeY - 4)) / 3.0F);
-                        var34 = var34 * (1.0D - var44) + -10.0D * var44;
+                        double var44 = (double)((iY - (sizeY - 4)) / 3.0F);
+                        terrainDensity = terrainDensity * (1.0D - var44) + -10.0D * var44;
                     }
 
-                    heightMap[var14] = var34;
-                    ++var14;
+                    heightMap[xyzIndex] = terrainDensity;
+                    ++xyzIndex;
                 }
             }
         }
@@ -370,348 +433,377 @@ public class OverworldChunkGenerator : ChunkSource
         return heightMap;
     }
 
-    public bool isChunkLoaded(int x, int z)
+    public bool IsChunkLoaded(int x, int z)
     {
         return true;
     }
 
-    public void decorate(ChunkSource source, int x, int z)
+    /// <summary>
+    /// Generates the features of the chunk, such as ores, trees, lakes, etc. The features that are generated depend on the biome of the chunk and some random factors.
+    /// </summary>
+    /// <param name="source">The chunk source that is generating the chunk</param>
+    /// <param name="chunkX">The x-coordinate of the chunk</param>
+    /// <param name="chunkZ">The z-coordinate of the chunk</param>
+    public void DecorateTerrain(ChunkSource source, int chunkX, int chunkZ)
     {
         BlockSand.fallInstantly = true;
-        int var4 = x * 16;
-        int var5 = z * 16;
-        Biome var6 = world.getBiomeSource().GetBiome(var4 + 16, var5 + 16);
-        random.setSeed(world.getSeed());
-        long var7 = random.nextLong() / 2L * 2L + 1L;
-        long var9 = random.nextLong() / 2L * 2L + 1L;
-        random.setSeed(x * var7 + z * var9 ^ world.getSeed());
-        double var11 = 0.25D;
-        int var13;
-        int var14;
-        int var15;
-        if (random.nextInt(4) == 0)
+        int blockX = chunkX * 16;
+        int blockZ = chunkZ * 16;
+        Biome chunkBiome = world.getBiomeSource().GetBiome(blockX + 16, blockZ + 16);
+        random.SetSeed(world.getSeed());
+        long xOffset = random.NextLong() / 2L * 2L + 1L;
+        long zOffset = random.NextLong() / 2L * 2L + 1L;
+        random.SetSeed(chunkX * xOffset + chunkZ * zOffset ^ world.getSeed());
+        double fraction = 0.25D;
+        int featureX;
+        int featureY;
+        int featureZ;
+
+	    // Generate lakes
+        if (random.NextInt(4) == 0)
         {
-            var13 = var4 + random.nextInt(16) + 8;
-            var14 = random.nextInt(128);
-            var15 = var5 + random.nextInt(16) + 8;
-            new LakeFeature(Block.Water.id).Generate(world, random, var13, var14, var15);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new LakeFeature(Block.Water.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        if (random.nextInt(8) == 0)
+	    // Generate lava lakes
+        if (random.NextInt(8) == 0)
         {
-            var13 = var4 + random.nextInt(16) + 8;
-            var14 = random.nextInt(random.nextInt(120) + 8);
-            var15 = var5 + random.nextInt(16) + 8;
-            if (var14 < 64 || random.nextInt(10) == 0)
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(random.NextInt(120) + 8);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            if (featureY < 64 || random.NextInt(10) == 0)
             {
-                new LakeFeature(Block.Lava.id).Generate(world, random, var13, var14, var15);
+                new LakeFeature(Block.Lava.id).Generate(world, random, featureX, featureY, featureZ);
             }
         }
 
-        int var16;
-        for (var13 = 0; var13 < 8; ++var13)
+	    // Generate Dungeons
+        for (int i = 0; i < 8; ++i)
         {
-            var14 = var4 + random.nextInt(16) + 8;
-            var15 = random.nextInt(128);
-            var16 = var5 + random.nextInt(16) + 8;
-            new DungeonFeature().Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new DungeonFeature().Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 10; ++var13)
+	    // Generate Clay patches
+        for (int i = 0; i < 10; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(128);
-            var16 = var5 + random.nextInt(16);
-            new ClayOreFeature(32).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16);
+            new ClayOreFeature(32).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 20; ++var13)
+	    // Generate Dirt blobs
+        for (int i = 0; i < 20; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(128);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.Dirt.id, 32).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.Dirt.id, 32).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 10; ++var13)
+	    // Generate Gravel blobs
+        for (int i = 0; i < 10; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(128);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.Gravel.id, 32).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.Gravel.id, 32).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 20; ++var13)
+	    // Generate Coal Ore Veins
+        for (int i = 0; i < 20; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(128);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.CoalOre.id, 16).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.CoalOre.id, 16).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 20; ++var13)
+	    // Generate Iron Ore Veins
+        for (int i = 0; i < 20; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(64);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.IronOre.id, 8).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(64);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.IronOre.id, 8).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 2; ++var13)
+	    // Generate Gold Ore Veins
+        for (int i = 0; i < 2; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(32);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.GoldOre.id, 8).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(32);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.GoldOre.id, 8).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 8; ++var13)
+	    // Generate Redstone Ore Veins
+        for (int i = 0; i < 8; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(16);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.RedstoneOre.id, 7).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(16);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.RedstoneOre.id, 7).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 1; ++var13)
+	    // Generate Diamond Ore Veins
+        for (int i = 0; i < 1; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(16);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.DiamondOre.id, 7).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(16);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.DiamondOre.id, 7).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var13 = 0; var13 < 1; ++var13)
+	    // Generate Lapis Lazuli Ore Veins
+        for (int i = 0; i < 1; ++i)
         {
-            var14 = var4 + random.nextInt(16);
-            var15 = random.nextInt(16) + random.nextInt(16);
-            var16 = var5 + random.nextInt(16);
-            new OreFeature(Block.LapisOre.id, 6).Generate(world, random, var14, var15, var16);
+            featureX = blockX + random.NextInt(16);
+            featureY = random.NextInt(16);
+            featureZ = blockZ + random.NextInt(16);
+            new OreFeature(Block.LapisOre.id, 6).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        var11 = 0.5D;
-        var13 = (int)((forestNoise.func_806_a(var4 * var11, var5 * var11) / 8.0D + random.nextDouble() * 4.0D + 4.0D) / 3.0D);
-        var14 = 0;
-        if (random.nextInt(10) == 0)
+	    // Determine the number and type of trees that should be generated
+        fraction = 0.5D;
+        int treeDensitySample = (int)((forestNoise.generateNoise(blockX * fraction, blockZ * fraction) / 8.0D + random.NextDouble() * 4.0D + 4.0D) / 3.0D);
+        int numberOfTrees = 0;
+        if (random.NextInt(10) == 0)
         {
-            ++var14;
+            ++numberOfTrees;
         }
 
-        if (var6 == Biome.Forest)
+        if (chunkBiome == Biome.Forest)
         {
-            var14 += var13 + 5;
+            numberOfTrees += treeDensitySample + 5;
         }
 
-        if (var6 == Biome.Rainforest)
+        if (chunkBiome == Biome.Rainforest)
         {
-            var14 += var13 + 5;
+            numberOfTrees += treeDensitySample + 5;
         }
 
-        if (var6 == Biome.SeasonalForest)
+        if (chunkBiome == Biome.SeasonalForest)
         {
-            var14 += var13 + 2;
+            numberOfTrees += treeDensitySample + 2;
         }
 
-        if (var6 == Biome.Taiga)
+        if (chunkBiome == Biome.Taiga)
         {
-            var14 += var13 + 5;
+            numberOfTrees += treeDensitySample + 5;
         }
 
-        if (var6 == Biome.Desert)
+        if (chunkBiome == Biome.Desert)
         {
-            var14 -= 20;
+            numberOfTrees -= 20;
         }
 
-        if (var6 == Biome.Tundra)
+        if (chunkBiome == Biome.Tundra)
         {
-            var14 -= 20;
+            numberOfTrees -= 20;
         }
 
-        if (var6 == Biome.Plains)
+        if (chunkBiome == Biome.Plains)
         {
-            var14 -= 20;
+            numberOfTrees -= 20;
         }
 
-        int var17;
-        for (var15 = 0; var15 < var14; ++var15)
+        for (int i = 0; i < numberOfTrees; ++i)
         {
-            var16 = var4 + random.nextInt(16) + 8;
-            var17 = var5 + random.nextInt(16) + 8;
-            Feature var18 = var6.GetRandomWorldGenForTrees(random);
-            var18.prepare(1.0D, 1.0D, 1.0D);
-            var18.Generate(world, random, var16, world.getTopY(var16, var17), var17);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureZ = blockZ + random.NextInt(16) + 8;
+            Feature treeFeature = chunkBiome.GetRandomWorldGenForTrees(random);
+            treeFeature.prepare(1.0D, 1.0D, 1.0D);
+            treeFeature.Generate(world, random, featureX, world.getTopY(featureX, featureZ), featureZ);
         }
 
-        byte var27 = 0;
-        if (var6 == Biome.Forest)
+	    // Choose an appropriate amount of Dandelions
+        byte amountOfDandelions = 0;
+        if (chunkBiome == Biome.Forest)
         {
-            var27 = 2;
+            amountOfDandelions = 2;
         }
 
-        if (var6 == Biome.SeasonalForest)
+        if (chunkBiome == Biome.SeasonalForest)
         {
-            var27 = 4;
+            amountOfDandelions = 4;
         }
 
-        if (var6 == Biome.Taiga)
+        if (chunkBiome == Biome.Taiga)
         {
-            var27 = 2;
+            amountOfDandelions = 2;
         }
 
-        if (var6 == Biome.Plains)
+        if (chunkBiome == Biome.Plains)
         {
-            var27 = 3;
+            amountOfDandelions = 3;
         }
 
-        int var19;
-        int var25;
-        for (var16 = 0; var16 < var27; ++var16)
+
+	    // Generate Dandelions
+        for (byte i = 0; i < amountOfDandelions; ++i)
         {
-            var17 = var4 + random.nextInt(16) + 8;
-            var25 = random.nextInt(128);
-            var19 = var5 + random.nextInt(16) + 8;
-            new PlantPatchFeature(Block.Dandelion.id).Generate(world, random, var17, var25, var19);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new PlantPatchFeature(Block.Dandelion.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        byte var28 = 0;
-        if (var6 == Biome.Forest)
+        byte amountOfTallgrass = 0;
+        if (chunkBiome == Biome.Forest)
         {
-            var28 = 2;
+            amountOfTallgrass = 2;
         }
 
-        if (var6 == Biome.Rainforest)
+        if (chunkBiome == Biome.Rainforest)
         {
-            var28 = 10;
+            amountOfTallgrass = 10;
         }
 
-        if (var6 == Biome.SeasonalForest)
+        if (chunkBiome == Biome.SeasonalForest)
         {
-            var28 = 2;
+            amountOfTallgrass = 2;
         }
 
-        if (var6 == Biome.Taiga)
+        if (chunkBiome == Biome.Taiga)
         {
-            var28 = 1;
+            amountOfTallgrass = 1;
         }
 
-        if (var6 == Biome.Plains)
+        if (chunkBiome == Biome.Plains)
         {
-            var28 = 10;
+            amountOfTallgrass = 10;
         }
 
-        int var20;
-        int var21;
-        for (var17 = 0; var17 < var28; ++var17)
+	    // Generate Tallgrass and Ferns
+        for (byte i = 0; i < amountOfTallgrass; ++i)
         {
-            byte var26 = 1;
-            if (var6 == Biome.Rainforest && random.nextInt(3) != 0)
+            byte grassMeta = 1;
+            if (chunkBiome == Biome.Rainforest && random.NextInt(3) != 0)
             {
-                var26 = 2;
+                // Fern
+                grassMeta = 2;
             }
 
-            var19 = var4 + random.nextInt(16) + 8;
-            var20 = random.nextInt(128);
-            var21 = var5 + random.nextInt(16) + 8;
-            new GrassPatchFeature(Block.Grass.id, var26).Generate(world, random, var19, var20, var21);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new GrassPatchFeature(Block.Grass.id, grassMeta).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        var28 = 0;
-        if (var6 == Biome.Desert)
+	    // Generate Deadbushes
+        byte amountOfDeadBushes = 0;
+        if (chunkBiome == Biome.Desert)
         {
-            var28 = 2;
+            amountOfDeadBushes = 2;
         }
 
-        for (var17 = 0; var17 < var28; ++var17)
+        for (byte i = 0; i < amountOfDeadBushes; ++i)
         {
-            var25 = var4 + random.nextInt(16) + 8;
-            var19 = random.nextInt(128);
-            var20 = var5 + random.nextInt(16) + 8;
-            new DeadBushPatchFeature(Block.DeadBush.id).Generate(world, random, var25, var19, var20);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new DeadBushPatchFeature(Block.DeadBush.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        if (random.nextInt(2) == 0)
+        // Generate Roses
+        if (random.NextInt(2) == 0)
         {
-            var17 = var4 + random.nextInt(16) + 8;
-            var25 = random.nextInt(128);
-            var19 = var5 + random.nextInt(16) + 8;
-            new PlantPatchFeature(Block.Rose.id).Generate(world, random, var17, var25, var19);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new PlantPatchFeature(Block.Rose.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        if (random.nextInt(4) == 0)
+	    // Generate Brown Mushrooms
+        if (random.NextInt(4) == 0)
         {
-            var17 = var4 + random.nextInt(16) + 8;
-            var25 = random.nextInt(128);
-            var19 = var5 + random.nextInt(16) + 8;
-            new PlantPatchFeature(Block.BrownMushroom.id).Generate(world, random, var17, var25, var19);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new PlantPatchFeature(Block.BrownMushroom.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        if (random.nextInt(8) == 0)
+	    // Generate Red Mushrooms
+        if (random.NextInt(8) == 0)
         {
-            var17 = var4 + random.nextInt(16) + 8;
-            var25 = random.nextInt(128);
-            var19 = var5 + random.nextInt(16) + 8;
-            new PlantPatchFeature(Block.RedMushroom.id).Generate(world, random, var17, var25, var19);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new PlantPatchFeature(Block.RedMushroom.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var17 = 0; var17 < 10; ++var17)
+	    // Generate Sugarcane
+        for (int i = 0; i < 10; ++i)
         {
-            var25 = var4 + random.nextInt(16) + 8;
-            var19 = random.nextInt(128);
-            var20 = var5 + random.nextInt(16) + 8;
-            new SugarCanePatchFeature().Generate(world, random, var25, var19, var20);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new SugarCanePatchFeature().Generate(world, random, featureX, featureY, featureZ);
         }
 
-        if (random.nextInt(32) == 0)
+	    // Generate Pumpkin Patches
+        if (random.NextInt(32) == 0)
         {
-            var17 = var4 + random.nextInt(16) + 8;
-            var25 = random.nextInt(128);
-            var19 = var5 + random.nextInt(16) + 8;
-            new PumpkinPatchFeature().Generate(world, random, var17, var25, var19);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new PumpkinPatchFeature().Generate(world, random, featureX, featureY, featureZ);
         }
 
-        var17 = 0;
-        if (var6 == Biome.Desert)
+	    // Generate Cacti
+        byte amountOfCacti = 0;
+        if (chunkBiome == Biome.Desert)
         {
-            var17 += 10;
+            amountOfCacti += 10;
         }
 
-        for (var25 = 0; var25 < var17; ++var25)
+        for (int i = 0; i < amountOfCacti; ++i)
         {
-            var19 = var4 + random.nextInt(16) + 8;
-            var20 = random.nextInt(128);
-            var21 = var5 + random.nextInt(16) + 8;
-            new CactusPatchFeature().Generate(world, random, var19, var20, var21);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(128);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new CactusPatchFeature().Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var25 = 0; var25 < 50; ++var25)
+        // Generate one-block water sources
+        for (int i = 0; i < 50; ++i)
         {
-            var19 = var4 + random.nextInt(16) + 8;
-            var20 = random.nextInt(random.nextInt(120) + 8);
-            var21 = var5 + random.nextInt(16) + 8;
-            new SpringFeature(Block.FlowingWater.id).Generate(world, random, var19, var20, var21);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(random.NextInt(120) + 8);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new SpringFeature(Block.FlowingWater.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        for (var25 = 0; var25 < 20; ++var25)
+        // Generate one-block lava sources
+        for (int x = 0; x < 20; ++x)
         {
-            var19 = var4 + random.nextInt(16) + 8;
-            var20 = random.nextInt(random.nextInt(random.nextInt(112) + 8) + 8);
-            var21 = var5 + random.nextInt(16) + 8;
-            new SpringFeature(Block.FlowingLava.id).Generate(world, random, var19, var20, var21);
+            featureX = blockX + random.NextInt(16) + 8;
+            featureY = random.NextInt(random.NextInt(random.NextInt(112) + 8) + 8);
+            featureZ = blockZ + random.NextInt(16) + 8;
+            new SpringFeature(Block.FlowingLava.id).Generate(world, random, featureX, featureY, featureZ);
         }
 
-        temperatures = world.getBiomeSource().GetTemperatures(temperatures, var4 + 8, var5 + 8, 16, 16);
+        // Place Snow in cold regions
+        temperatures = world.getBiomeSource().GetTemperatures(temperatures, blockX + 8, blockZ + 8, 16, 16);
 
-        for (var25 = var4 + 8; var25 < var4 + 8 + 16; ++var25)
+        for (int x = blockX + 8; x < blockX + 8 + 16; ++x)
         {
-            for (var19 = var5 + 8; var19 < var5 + 8 + 16; ++var19)
+            for (int z = blockZ + 8; z < blockZ + 8 + 16; ++z)
             {
-                var20 = var25 - (var4 + 8);
-                var21 = var19 - (var5 + 8);
-                int var22 = world.getTopSolidBlockY(var25, var19);
-                double var23 = temperatures[var20 * 16 + var21] - (var22 - 64) / 64.0D * 0.3D;
-                if (var23 < 0.5D && var22 > 0 && var22 < 128 && world.isAir(var25, var22, var19) && world.getMaterial(var25, var22 - 1, var19).BlocksMovement && world.getMaterial(var25, var22 - 1, var19) != Material.Ice)
+                int offsetX = x - (blockX + 8);
+                int offsetZ = z - (blockZ + 8);
+                int var22 = world.getTopSolidBlockY(x, z);
+                double temperatureSample = temperatures[offsetX * 16 + offsetZ] - (var22 - 64) / 64.0D * 0.3D;
+                if (temperatureSample < 0.5D && var22 > 0 && var22 < 128 && world.isAir(x, var22, z) && world.getMaterial(x, var22 - 1, z).BlocksMovement && world.getMaterial(x, var22 - 1, z) != Material.Ice)
                 {
-                    world.setBlock(var25, var22, var19, Block.Snow.id);
+                    world.setBlock(x, var22, z, Block.Snow.id);
                 }
             }
         }

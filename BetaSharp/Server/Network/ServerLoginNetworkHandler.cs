@@ -14,14 +14,13 @@ namespace BetaSharp.Server.Network;
 
 public class ServerLoginNetworkHandler : NetHandler
 {
-    public static Logger LOGGER = Logger.getLogger("Minecraft");
-    private static java.util.Random random = new();
+    private static JavaRandom random = new();
     public Connection connection;
-    public bool closed = false;
+    public bool closed;
     private MinecraftServer server;
-    private int loginTicks = 0;
-    private string username = null;
-    private LoginHelloPacket loginPacket = null;
+    private int loginTicks;
+    private string username;
+    private LoginHelloPacket loginPacket;
     private string serverId = "";
 
     public ServerLoginNetworkHandler(MinecraftServer server, Socket socket, string name)
@@ -61,7 +60,7 @@ public class ServerLoginNetworkHandler : NetHandler
     {
         try
         {
-            LOGGER.info("Disconnecting " + getConnectionInfo() + ": " + reason);
+            Log.Info($"Disconnecting {getConnectionInfo()}: {reason}");
             connection.sendPacket(new DisconnectPacket(reason));
             connection.disconnect();
             closed = true;
@@ -76,7 +75,7 @@ public class ServerLoginNetworkHandler : NetHandler
     {
         if (server.onlineMode)
         {
-            serverId = Long.toHexString(random.nextLong());
+            serverId = Long.toHexString(random.NextLong());
             connection.sendPacket(new HandshakePacket(serverId));
         }
         else
@@ -130,7 +129,7 @@ public class ServerLoginNetworkHandler : NetHandler
         {
             server.playerManager.loadPlayerData(ent);
             ent.setWorld(server.getWorld(ent.dimensionId));
-            LOGGER.info(getConnectionInfo() + " logged in with entity id " + ent.id + " at (" + ent.x + ", " + ent.y + ", " + ent.z + ")");
+            Log.Info($"{getConnectionInfo()} logged in with entity id {ent.id} at ({ent.x}, {ent.y}, {ent.z})");
             ServerWorld var3 = server.getWorld(ent.dimensionId);
             Vec3i var4 = var3.getSpawnPos();
             ServerPlayNetworkHandler handler = new ServerPlayNetworkHandler(server, connection, ent);
@@ -140,7 +139,7 @@ public class ServerLoginNetworkHandler : NetHandler
             server.playerManager.sendToAll(new ChatMessagePacket("§e" + ent.name + " joined the game."));
             server.playerManager.addPlayer(ent);
             handler.teleport(ent.x, ent.y, ent.z, ent.yaw, ent.pitch);
-            server.connections.addConnection(handler);
+            server.connections.AddConnection(handler);
             handler.sendPacket(new WorldTimeUpdateS2CPacket(var3.getTime()));
             ent.initScreenHandler();
         }
@@ -148,9 +147,9 @@ public class ServerLoginNetworkHandler : NetHandler
         closed = true;
     }
 
-    public override void onDisconnected(string reason, object[] objects)
+    public override void onDisconnected(string reason, object[]? objects)
     {
-        LOGGER.info(getConnectionInfo() + " lost connection");
+        Log.Info($"{getConnectionInfo()} lost connection");
         closed = true;
     }
 
@@ -162,7 +161,7 @@ public class ServerLoginNetworkHandler : NetHandler
     public string getConnectionInfo()
     {
         if (connection.getAddress() == null) return "Internal";
-        return username != null ? username + " [" + connection.getAddress().toString() + "]" : connection.getAddress().toString();
+        return username != null ? username + " [" + connection.getAddress()!.toString() + "]" : connection.getAddress()!.toString();
     }
 
     public override bool isServerSide()

@@ -1,4 +1,4 @@
-using BetaSharp.Items;
+﻿using BetaSharp.Items;
 using BetaSharp.Util.Maths;
 using java.awt.image;
 using java.io;
@@ -14,7 +14,7 @@ public class CompassSprite : DynamicTexture
     private double angle;
     private double angleDelta;
 
-    public CompassSprite(Minecraft var1) : base(Item.COMPASS.getTextureId(0))
+    public CompassSprite(Minecraft var1) : base(Item.Compass.getTextureId(0))
     {
         mc = var1;
         atlas = FXImage.Items;
@@ -26,9 +26,9 @@ public class CompassSprite : DynamicTexture
             int var4 = sprite / 16 * 16;
             var2.getRGB(var3, var4, 16, 16, compass, 0, 16);
         }
-        catch (java.io.IOException var5)
+        catch (java.io.IOException ex)
         {
-            var5.printStackTrace();
+            ex.printStackTrace();
         }
 
     }

@@ -1,6 +1,7 @@
 using BetaSharp.Blocks.Materials;
 using BetaSharp.Entities;
 using BetaSharp.Items;
+using BetaSharp.Util.Maths;
 using BetaSharp.Worlds;
 using BetaSharp.Worlds.Colors;
 
@@ -9,7 +10,7 @@ namespace BetaSharp.Blocks;
 public class BlockLeaves : BlockLeavesBase
 {
     private int spriteIndex;
-    int[] decayRegion;
+    private readonly ThreadLocal<int[]> s_decayRegion = new(() => null);
 
     public BlockLeaves(int id, int textureId) : base(id, textureId, Material.Leaves, false)
     {
@@ -67,7 +68,7 @@ public class BlockLeaves : BlockLeavesBase
 
     }
 
-    public override void onTick(World world, int x, int y, int z, java.util.Random random)
+    public override void onTick(World world, int x, int y, int z, JavaRandom random)
     {
         if (!world.isRemote)
         {
@@ -79,10 +80,12 @@ public class BlockLeaves : BlockLeavesBase
                 sbyte regionSize = 32;
                 int planeSize = regionSize * regionSize;
                 int centerOffset = regionSize / 2;
-                if (decayRegion == null)
+                if (s_decayRegion.Value == null)
                 {
-                    decayRegion = new int[regionSize * regionSize * regionSize];
+                    s_decayRegion.Value = new int[regionSize * regionSize * regionSize];
                 }
+
+                int[] decayRegion = s_decayRegion.Value;
 
                 int distanceToLog;
                 if (world.isRegionLoaded(x - loadCheckExtent, y - loadCheckExtent, z - loadCheckExtent, x + loadCheckExtent, y + loadCheckExtent, z + loadCheckExtent))
@@ -188,19 +191,19 @@ public class BlockLeaves : BlockLeavesBase
         world.setBlock(x, y, z, 0);
     }
 
-    public override int getDroppedItemCount(java.util.Random random)
+    public override int getDroppedItemCount(JavaRandom random)
     {
-        return random.nextInt(20) == 0 ? 1 : 0;
+        return random.NextInt(20) == 0 ? 1 : 0;
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
         return Block.Sapling.id;
     }
 
     public override void afterBreak(World world, EntityPlayer player, int x, int y, int z, int meta)
     {
-        if (!world.isRemote && player.getHand() != null && player.getHand().itemId == Item.SHEARS.id)
+        if (!world.isRemote && player.getHand() != null && player.getHand().itemId == Item.Shears.id)
         {
             player.increaseStat(Stats.Stats.mineBlockStatArray[id], 1);
             dropStack(world, x, y, z, new ItemStack(Block.Leaves.id, 1, meta & 3));

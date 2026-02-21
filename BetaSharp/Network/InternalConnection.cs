@@ -8,7 +8,7 @@ public class InternalConnection : Connection
 
     public string Name { get; set; }
 
-    public InternalConnection(NetHandler networkHandler, string name)
+    public InternalConnection(NetHandler? networkHandler, string name)
     {
         this.networkHandler = networkHandler;
         Name = name;
@@ -39,6 +39,11 @@ public class InternalConnection : Connection
 
     protected override void processPackets()
     {
+        if (networkHandler == null)
+        {
+            throw new Exception($"InternalConnection is not initialized");
+        }
+
         int count = 0;
         while (!readQueue.isEmpty())
         {
@@ -48,7 +53,7 @@ public class InternalConnection : Connection
         }
         if (count > 0)
         {
-            // Console.WriteLine($"[{Name}] Processed {count} packets");
+            // Log.Info($"[{Name}] Processed {count} packets");
         }
     }
 
@@ -71,7 +76,7 @@ public class InternalConnection : Connection
             this.disconnectedReason = disconnectedReason;
             this.disconnectReasonArgs = disconnectReasonArgs;
 
-            Console.WriteLine($"[{Name}] Disconnected: {disconnectedReason}");
+            Log.Info($"[{Name}] Disconnected: {disconnectedReason}");
 
             if (RemoteConnection != null && RemoteConnection.open)
             {
@@ -88,20 +93,29 @@ public class InternalConnection : Connection
             disconnected = true;
             disconnectedReason = reason;
             disconnectReasonArgs = args;
-            Console.WriteLine($"[{Name}] Remote disconnected: {reason}");
+            Log.Info($"[{Name}] Remote disconnected: {reason}");
         }
     }
 
     public override void disconnect()
     {
-        disconnect("Disconnecting", []);
+        disconnect("Disconnecting");
     }
 
     public override void interrupt()
     {
     }
 
-    public override java.net.SocketAddress getAddress()
+    public override void tick()
+    {
+        processPackets();
+        if (disconnected && readQueue.isEmpty())
+        {
+            networkHandler?.onDisconnected(disconnectedReason, disconnectReasonArgs);
+        }
+    }
+
+    public override java.net.SocketAddress? getAddress()
     {
         return new java.net.InetSocketAddress("127.0.0.1", 12345);
     }

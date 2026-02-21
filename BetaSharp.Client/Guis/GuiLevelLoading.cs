@@ -1,3 +1,5 @@
+﻿using BetaSharp.Client.Network;
+using BetaSharp.Network;
 using BetaSharp.Server.Internal;
 using BetaSharp.Server.Threading;
 
@@ -7,46 +9,55 @@ public class GuiLevelLoading(string worldDir, long seed) : GuiScreen
 {
     private readonly string _worldDir = worldDir;
     private readonly long _seed = seed;
-    private bool _serverStarted = false;
+    private bool _serverStarted;
 
-    public override void initGui()
+    public override bool PausesGame=> false;
+
+    public override void InitGui()
     {
-        controlList.clear();
+        _controlList.Clear();
         if (!_serverStarted)
         {
             _serverStarted = true;
-            mc.internalServer = new InternalServer(System.IO.Path.Combine(Minecraft.getMinecraftDir().getAbsolutePath(), "saves"), _worldDir, _seed.ToString(), 10);
+            mc.internalServer = new InternalServer(System.IO.Path.Combine(Minecraft.getMinecraftDir().getAbsolutePath(), "saves"), _worldDir, _seed.ToString(), 10, mc.options.Difficulty);
             new RunServerThread(mc.internalServer, "InternalServer").start();
         }
     }
 
-    public override void updateScreen()
+    public override void UpdateScreen()
     {
         if (mc.internalServer != null)
         {
             if (mc.internalServer.stopped)
             {
-                mc.displayGuiScreen(new GuiConnectFailed("connect.failed", "disconnect.genericReason", new object[] { "Internal server stopped unexpectedly" }));
+                mc.displayGuiScreen(new GuiConnectFailed("connect.failed", "disconnect.genericReason", "Internal server stopped unexpectedly"));
                 return;
             }
 
             if (mc.internalServer.isReady)
             {
-                java.lang.Thread.sleep(100);
-                mc.displayGuiScreen(new GuiConnecting(mc, "localhost", mc.internalServer.Port));
+                InternalConnection clientConnection = new(null, "Internal-Client");
+                InternalConnection serverConnection = new(null, "Internal-Server");
+
+                clientConnection.AssignRemote(serverConnection);
+                serverConnection.AssignRemote(clientConnection);
+
+                mc.internalServer.connections.AddInternalConnection(serverConnection);
+                Log.Info("[Internal-Client] Created internal connection");
+
+                ClientNetworkHandler clientHandler = new(mc, clientConnection);
+                clientConnection.setNetworkHandler(clientHandler);
+                clientHandler.addToSendQueue(new BetaSharp.Network.Packets.HandshakePacket(mc.session.username));
+
+                mc.displayGuiScreen(new GuiConnecting(mc, clientHandler));
             }
         }
     }
 
-    public override bool doesGuiPauseGame()
+    public override void Render(int var1, int var2, float var3)
     {
-        return false;
-    }
-
-    public override void render(int var1, int var2, float var3)
-    {
-        drawDefaultBackground();
-        TranslationStorage var4 = TranslationStorage.getInstance();
+        DrawDefaultBackground();
+        TranslationStorage var4 = TranslationStorage.Instance;
 
         string title = "Loading level";
         string progressMsg = "";
@@ -58,9 +69,9 @@ public class GuiLevelLoading(string worldDir, long seed) : GuiScreen
             progress = mc.internalServer.progress;
         }
 
-        drawCenteredString(fontRenderer, title, width / 2, height / 2 - 50, 0x00FFFFFF);
-        drawCenteredString(fontRenderer, progressMsg + " (" + progress + "%)", width / 2, height / 2 - 10, 0x00FFFFFF);
+        DrawCenteredString(FontRenderer, title, Width / 2, Height / 2 - 50, 0xFFFFFF);
+        DrawCenteredString(FontRenderer, progressMsg + " (" + progress + "%)", Width / 2, Height / 2 - 10, 0xFFFFFF);
 
-        base.render(var1, var2, var3);
+        base.Render(var1, var2, var3);
     }
 }

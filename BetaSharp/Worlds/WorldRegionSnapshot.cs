@@ -1,4 +1,4 @@
-using BetaSharp.Blocks;
+﻿using BetaSharp.Blocks;
 using BetaSharp.Blocks.Entities;
 using BetaSharp.Blocks.Materials;
 using BetaSharp.NBT;
@@ -16,7 +16,7 @@ public class WorldRegionSnapshot : BlockView, IDisposable
     private readonly float[] _lightTable;
     private readonly int _skylightSubtracted;
     private readonly BiomeSource _biomeSource;
-    private bool _isLit = false;
+    private bool _isLit;
     private readonly Dictionary<BlockPos, BlockEntity> _tileEntityCache = [];
 
     public WorldRegionSnapshot(World world, int minX, int var3, int minZ, int maxX, int var6, int maxZ)
@@ -42,7 +42,7 @@ public class WorldRegionSnapshot : BlockView, IDisposable
         {
             for (int cz = _chunkZ; cz <= maxChunkZ; ++cz)
             {
-                Chunk originalChunk = world.getChunk(cx, cz);
+                Chunk originalChunk = world.GetChunk(cx, cz);
                 _chunks[cx - _chunkX][cz - _chunkZ] = new(originalChunk);
             }
         }

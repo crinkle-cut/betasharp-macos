@@ -1,5 +1,5 @@
 using BetaSharp.Client.Rendering.Core;
-using BetaSharp.Client.Rendering.Entitys;
+using BetaSharp.Client.Rendering.Entities;
 using BetaSharp.Entities;
 using BetaSharp.Util.Maths;
 using BetaSharp.Worlds;
@@ -11,8 +11,8 @@ public class EntityPickupFX : EntityFX
 
     private readonly Entity target;
     private readonly Entity source;
-    private int currentAge = 0;
-    private readonly int maxAge = 0;
+    private int currentAge;
+    private readonly int maxAge;
     private readonly float yOffset;
 
     public EntityPickupFX(World world, Entity target, Entity source, float yOffset) : base(world, target.x, target.y, target.z, target.velocityX, target.velocityY, target.velocityZ)
@@ -36,9 +36,9 @@ public class EntityPickupFX : EntityFX
         double renderX = targetX + (sourceX - targetX) * (double)lifeProgress;
         double renderY = targetY + (sourceY - targetY) * (double)lifeProgress;
         double renderZ = targetZ + (sourceZ - targetZ) * (double)lifeProgress;
-        int itemX = MathHelper.floor_double(renderX);
-        int itemY = MathHelper.floor_double(renderY + (double)(standingEyeHeight / 2.0F));
-        int itemZ = MathHelper.floor_double(renderZ);
+        int itemX = MathHelper.Floor(renderX);
+        int itemY = MathHelper.Floor(renderY + (double)(standingEyeHeight / 2.0F));
+        int itemZ = MathHelper.Floor(renderZ);
         float luminance = world.getLuminance(itemX, itemY, itemZ);
         renderX -= interpPosX;
         renderY -= interpPosY;

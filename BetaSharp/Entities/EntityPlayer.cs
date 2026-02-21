@@ -20,11 +20,11 @@ public abstract class EntityPlayer : EntityLiving
     public ScreenHandler playerScreenHandler;
     public ScreenHandler currentScreenHandler;
     public byte unused = 0;
-    public int score = 0;
+    public int score;
     public float prevStepBobbingAmount;
     public float stepBobbingAmount;
-    public bool handSwinging = false;
-    public int handSwingTicks = 0;
+    public bool handSwinging;
+    public int handSwingTicks;
     public string name;
     public int dimensionId;
     public string playerCloakUrl;
@@ -43,10 +43,10 @@ public abstract class EntityPlayer : EntityLiving
     private Vec3i playerSpawnCoordinate;
     private Vec3i startMinecartRidingCoordinate;
     public int portalCooldown = 20;
-    protected bool inTeleportationState = false;
+    protected bool inTeleportationState;
     public float changeDimensionCooldown;
     public float lastScreenDistortion;
-    private int damageSpill = 0;
+    private int damageSpill;
     public EntityFish fishHook = null;
 
     public EntityPlayer(World world) : base(world)
@@ -226,7 +226,7 @@ public abstract class EntityPlayer : EntityLiving
         inventory.inventoryTick();
         prevStepBobbingAmount = stepBobbingAmount;
         base.tickMovement();
-        float var1 = MathHelper.sqrt_double(velocityX * velocityX + velocityZ * velocityZ);
+        float var1 = MathHelper.Sqrt(velocityX * velocityX + velocityZ * velocityZ);
         float var2 = (float)System.Math.Atan(-velocityY * (double)0.2F) * 15.0F;
         if (var1 > 0.1F)
         {
@@ -281,14 +281,14 @@ public abstract class EntityPlayer : EntityLiving
         velocityY = (double)0.1F;
         if (name.Equals("Notch"))
         {
-            dropItem(new ItemStack(Item.APPLE, 1), true);
+            dropItem(new ItemStack(Item.Apple, 1), true);
         }
 
         inventory.dropInventory();
         if (adversary != null)
         {
-            velocityX = (double)(-MathHelper.cos((attackedAtYaw + yaw) * (float)System.Math.PI / 180.0F) * 0.1F);
-            velocityZ = (double)(-MathHelper.sin((attackedAtYaw + yaw) * (float)System.Math.PI / 180.0F) * 0.1F);
+            velocityX = (double)(-MathHelper.Cos((attackedAtYaw + yaw) * (float)System.Math.PI / 180.0F) * 0.1F);
+            velocityZ = (double)(-MathHelper.Sin((attackedAtYaw + yaw) * (float)System.Math.PI / 180.0F) * 0.1F);
         }
         else
         {
@@ -333,23 +333,23 @@ public abstract class EntityPlayer : EntityLiving
             float var5;
             if (throwRandomly)
             {
-                var5 = random.nextFloat() * 0.5F;
-                float var6 = random.nextFloat() * (float)System.Math.PI * 2.0F;
-                var3.velocityX = (double)(-MathHelper.sin(var6) * var5);
-                var3.velocityZ = (double)(MathHelper.cos(var6) * var5);
+                var5 = random.NextFloat() * 0.5F;
+                float var6 = random.NextFloat() * (float)System.Math.PI * 2.0F;
+                var3.velocityX = (double)(-MathHelper.Sin(var6) * var5);
+                var3.velocityZ = (double)(MathHelper.Cos(var6) * var5);
                 var3.velocityY = (double)0.2F;
             }
             else
             {
                 var4 = 0.3F;
-                var3.velocityX = (double)(-MathHelper.sin(yaw / 180.0F * (float)System.Math.PI) * MathHelper.cos(pitch / 180.0F * (float)System.Math.PI) * var4);
-                var3.velocityZ = (double)(MathHelper.cos(yaw / 180.0F * (float)System.Math.PI) * MathHelper.cos(pitch / 180.0F * (float)System.Math.PI) * var4);
-                var3.velocityY = (double)(-MathHelper.sin(pitch / 180.0F * (float)System.Math.PI) * var4 + 0.1F);
+                var3.velocityX = (double)(-MathHelper.Sin(yaw / 180.0F * (float)System.Math.PI) * MathHelper.Cos(pitch / 180.0F * (float)System.Math.PI) * var4);
+                var3.velocityZ = (double)(MathHelper.Cos(yaw / 180.0F * (float)System.Math.PI) * MathHelper.Cos(pitch / 180.0F * (float)System.Math.PI) * var4);
+                var3.velocityY = (double)(-MathHelper.Sin(pitch / 180.0F * (float)System.Math.PI) * var4 + 0.1F);
                 var4 = 0.02F;
-                var5 = random.nextFloat() * (float)System.Math.PI * 2.0F;
-                var4 *= random.nextFloat();
+                var5 = random.NextFloat() * (float)System.Math.PI * 2.0F;
+                var4 *= random.NextFloat();
                 var3.velocityX += java.lang.Math.cos((double)var5) * (double)var4;
-                var3.velocityY += (double)((random.nextFloat() - random.nextFloat()) * 0.1F);
+                var3.velocityY += (double)((random.NextFloat() - random.NextFloat()) * 0.1F);
                 var3.velocityZ += java.lang.Math.sin((double)var5) * (double)var4;
             }
 
@@ -394,7 +394,7 @@ public abstract class EntityPlayer : EntityLiving
         sleepTimer = nbt.GetShort("SleepTimer");
         if (sleeping)
         {
-            sleepingPos = new Vec3i(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z));
+            sleepingPos = new Vec3i(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z));
             wakeUp(true, true, false);
         }
 
@@ -498,7 +498,7 @@ public abstract class EntityPlayer : EntityLiving
 
     protected void commandWolvesToAttack(EntityLiving entity, bool sitting)
     {
-        if (!(entity is EntityCreeper) && !(entity is EntityGhast))
+        if (entity is not EntityCreeper && entity is not EntityGhast)
         {
             if (entity is EntityWolf)
             {
@@ -509,7 +509,7 @@ public abstract class EntityPlayer : EntityLiving
                 }
             }
 
-            if (!(entity is EntityPlayer) || isPvpEnabled())
+            if (entity is not EntityPlayer || isPvpEnabled())
             {
                 var var7 = world.collectEntitiesByClass(EntityWolf.Class, new Box(x, y, z, x + 1.0D, y + 1.0D, z + 1.0D).expand(16.0D, 4.0D, 16.0D));
 
@@ -789,11 +789,11 @@ public abstract class EntityPlayer : EntityLiving
 
     public static Vec3i findRespawnPosition(World world, Vec3i spawnPos)
     {
-        ChunkSource var2 = world.getChunkSource();
-        var2.loadChunk(spawnPos.x - 3 >> 4, spawnPos.z - 3 >> 4);
-        var2.loadChunk(spawnPos.x + 3 >> 4, spawnPos.z - 3 >> 4);
-        var2.loadChunk(spawnPos.x - 3 >> 4, spawnPos.z + 3 >> 4);
-        var2.loadChunk(spawnPos.x + 3 >> 4, spawnPos.z + 3 >> 4);
+        ChunkSource var2 = world.GetChunkSource();
+        var2.LoadChunk(spawnPos.x - 3 >> 4, spawnPos.z - 3 >> 4);
+        var2.LoadChunk(spawnPos.x + 3 >> 4, spawnPos.z - 3 >> 4);
+        var2.LoadChunk(spawnPos.x - 3 >> 4, spawnPos.z + 3 >> 4);
+        var2.LoadChunk(spawnPos.x + 3 >> 4, spawnPos.z + 3 >> 4);
         if (world.getBlockId(spawnPos.x, spawnPos.y, spawnPos.z) != Block.Bed.id)
         {
             return null;
@@ -895,7 +895,7 @@ public abstract class EntityPlayer : EntityLiving
             int var7;
             if (isInFluid(Material.Water))
             {
-                var7 = java.lang.Math.round(MathHelper.sqrt_double(x * x + y * y + z * z) * 100.0F);
+                var7 = java.lang.Math.round(MathHelper.Sqrt(x * x + y * y + z * z) * 100.0F);
                 if (var7 > 0)
                 {
                     increaseStat(Stats.Stats.distanceDoveStat, var7);
@@ -903,7 +903,7 @@ public abstract class EntityPlayer : EntityLiving
             }
             else if (isInWater())
             {
-                var7 = java.lang.Math.round(MathHelper.sqrt_double(x * x + z * z) * 100.0F);
+                var7 = java.lang.Math.round(MathHelper.Sqrt(x * x + z * z) * 100.0F);
                 if (var7 > 0)
                 {
                     increaseStat(Stats.Stats.distanceSwumStat, var7);
@@ -918,7 +918,7 @@ public abstract class EntityPlayer : EntityLiving
             }
             else if (onGround)
             {
-                var7 = java.lang.Math.round(MathHelper.sqrt_double(x * x + z * z) * 100.0F);
+                var7 = java.lang.Math.round(MathHelper.Sqrt(x * x + z * z) * 100.0F);
                 if (var7 > 0)
                 {
                     increaseStat(Stats.Stats.distanceWalkedStat, var7);
@@ -926,7 +926,7 @@ public abstract class EntityPlayer : EntityLiving
             }
             else
             {
-                var7 = java.lang.Math.round(MathHelper.sqrt_double(x * x + z * z) * 100.0F);
+                var7 = java.lang.Math.round(MathHelper.Sqrt(x * x + z * z) * 100.0F);
                 if (var7 > 25)
                 {
                     increaseStat(Stats.Stats.distanceFlownStat, var7);
@@ -940,7 +940,7 @@ public abstract class EntityPlayer : EntityLiving
     {
         if (vehicle != null)
         {
-            int var7 = java.lang.Math.round(MathHelper.sqrt_double(x * x + y * y + z * z) * 100.0F);
+            int var7 = java.lang.Math.round(MathHelper.Sqrt(x * x + y * y + z * z) * 100.0F);
             if (var7 > 0)
             {
                 if (vehicle is EntityMinecart)
@@ -948,9 +948,9 @@ public abstract class EntityPlayer : EntityLiving
                     increaseStat(Stats.Stats.distanceByMinecartStat, var7);
                     if (startMinecartRidingCoordinate == null)
                     {
-                        startMinecartRidingCoordinate = new Vec3i(MathHelper.floor_double(base.x), MathHelper.floor_double(base.y), MathHelper.floor_double(base.z));
+                        startMinecartRidingCoordinate = new Vec3i(MathHelper.Floor(base.x), MathHelper.Floor(base.y), MathHelper.Floor(base.z));
                     }
-                    else if (startMinecartRidingCoordinate.getSqDistanceTo(MathHelper.floor_double(base.x), MathHelper.floor_double(base.y), MathHelper.floor_double(base.z)) >= 1000.0D)
+                    else if (startMinecartRidingCoordinate.getSqDistanceTo(MathHelper.Floor(base.x), MathHelper.Floor(base.y), MathHelper.Floor(base.z)) >= 1000.0D)
                     {
                         increaseStat(Achievements.CraftRail, 1);
                     }
@@ -990,7 +990,7 @@ public abstract class EntityPlayer : EntityLiving
     public override int getItemStackTextureId(ItemStack stack)
     {
         int var2 = base.getItemStackTextureId(stack);
-        if (stack.itemId == Item.FISHING_ROD.id && fishHook != null)
+        if (stack.itemId == Item.FishingRod.id && fishHook != null)
         {
             var2 = stack.getTextureId() + 16;
         }

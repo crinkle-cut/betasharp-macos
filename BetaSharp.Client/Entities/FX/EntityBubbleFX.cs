@@ -14,7 +14,7 @@ public class EntityBubbleFX : EntityFX
         particleBlue = 1.0F;
         particleTextureIndex = 32;
         setBoundingBoxSpacing(0.02F, 0.02F);
-        particleScale *= random.nextFloat() * 0.6F + 0.2F;
+        particleScale *= random.NextFloat() * 0.6F + 0.2F;
         base.velocityX = velocityX * (double)0.2F + (double)((float)(java.lang.Math.random() * 2.0D - 1.0D) * 0.02F);
         base.velocityY = velocityY * (double)0.2F + (double)((float)(java.lang.Math.random() * 2.0D - 1.0D) * 0.02F);
         base.velocityZ = velocityZ * (double)0.2F + (double)((float)(java.lang.Math.random() * 2.0D - 1.0D) * 0.02F);
@@ -31,7 +31,7 @@ public class EntityBubbleFX : EntityFX
         velocityX *= (double)0.85F;
         velocityY *= (double)0.85F;
         velocityZ *= (double)0.85F;
-        if (world.getMaterial(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z)) != Material.Water)
+        if (world.getMaterial(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z)) != Material.Water)
         {
             markDead();
         }

@@ -8,8 +8,8 @@ namespace BetaSharp.Client.Entities.FX;
 public class EntityFootStepFX : EntityFX
 {
 
-    private int localAge = 0;
-    private readonly int maxAge = 0;
+    private int localAge;
+    private readonly int maxAge;
     private readonly TextureManager textureManager;
 
     public EntityFootStepFX(TextureManager textureManager, World world, double x, double y, double z) : base(world, x, y, z, 0.0D, 0.0D, 0.0D)
@@ -35,8 +35,8 @@ public class EntityFootStepFX : EntityFX
         float renderX = (float)(x - interpPosX);
         float renderY = (float)(y - interpPosY);
         float renderZ = (float)(z - interpPosZ);
-        float brightness = world.getLuminance(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z));
-        textureManager.bindTexture(textureManager.getTextureId("/misc/footprint.png"));
+        float brightness = world.getLuminance(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z));
+        textureManager.BindTexture(textureManager.GetTextureId("/misc/footprint.png"));
         GLManager.GL.Enable(GLEnum.Blend);
         GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
         t.startDrawingQuads();

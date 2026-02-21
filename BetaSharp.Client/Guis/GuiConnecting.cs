@@ -6,47 +6,52 @@ namespace BetaSharp.Client.Guis;
 public class GuiConnecting : GuiScreen
 {
 
-    private ClientNetworkHandler clientHandler;
-    private bool cancelled = false;
-    private const int BUTTON_CANCEL = 0;
+    private ClientNetworkHandler _clientHandler;
+    private bool _cancelled = false;
+    private const int _buttonCancel = 0;
+
+    public override bool PausesGame=> false;
 
     public GuiConnecting(Minecraft mc, string host, int port)
     {
-        java.lang.System.@out.println("Connecting to " + host + ", " + port);
-        mc.changeWorld1(null);
+        Log.Info($"Connecting to {host}, {port}");
+        mc.changeWorld(null);
         new ThreadConnectToServer(this, mc, host, port).start();
     }
 
-    public override void updateScreen()
+    public GuiConnecting(Minecraft mc, ClientNetworkHandler clientHandler)
     {
-        if (clientHandler != null)
+        _clientHandler = clientHandler;
+        mc.changeWorld(null);
+    }
+
+    public override void UpdateScreen()
+    {
+        if (_clientHandler != null)
         {
-            clientHandler.tick();
+            _clientHandler.tick();
         }
 
     }
 
-    protected override void keyTyped(char eventChar, int eventKey)
+    protected override void KeyTyped(char eventChar, int eventKey)
     {
     }
 
-    public override void initGui()
+    public override void InitGui()
     {
-        TranslationStorage translations = TranslationStorage.getInstance();
-        controlList.clear();
-        controlList.add(new GuiButton(BUTTON_CANCEL, width / 2 - 100, height / 4 + 120 + 12, translations.translateKey("gui.cancel")));
+        TranslationStorage translations = TranslationStorage.Instance;
+        _controlList.Clear();
+        _controlList.Add(new GuiButton(_buttonCancel, Width / 2 - 100, Height / 4 + 120 + 12, translations.TranslateKey("gui.cancel")));
     }
 
-    protected override void actionPerformed(GuiButton button)
+    protected override void ActionPerformed(GuiButton button)
     {
-        switch (button.id)
+        switch (button.Id)
         {
-            case BUTTON_CANCEL:
-                cancelled = true;
-                if (clientHandler != null)
-                {
-                    clientHandler.disconnect();
-                }
+            case _buttonCancel:
+                _cancelled = true;
+                _clientHandler?.disconnect();
 
                 mc.displayGuiScreen(new GuiMainMenu());
                 break;
@@ -54,41 +59,36 @@ public class GuiConnecting : GuiScreen
 
     }
 
-    public override void render(int mouseX, int mouseY, float partialTicks)
+    public override void Render(int mouseX, int mouseY, float partialTicks)
     {
-        drawDefaultBackground();
-        TranslationStorage translations = TranslationStorage.getInstance();
-        if (clientHandler == null)
+        DrawDefaultBackground();
+        TranslationStorage translations = TranslationStorage.Instance;
+        if (_clientHandler == null)
         {
-            drawCenteredString(fontRenderer, translations.translateKey("connect.connecting"), width / 2, height / 2 - 50, 0x00FFFFFF);
-            drawCenteredString(fontRenderer, "", width / 2, height / 2 - 10, 0x00FFFFFF);
+            DrawCenteredString(FontRenderer, translations.TranslateKey("connect.connecting"), Width / 2, Height / 2 - 50, 0xFFFFFF);
+            DrawCenteredString(FontRenderer, "", Width / 2, Height / 2 - 10, 0xFFFFFF);
         }
         else
         {
-            drawCenteredString(fontRenderer, translations.translateKey("connect.authorizing"), width / 2, height / 2 - 50, 0x00FFFFFF);
-            drawCenteredString(fontRenderer, clientHandler.field_1209_a, width / 2, height / 2 - 10, 0x00FFFFFF);
+            DrawCenteredString(FontRenderer, translations.TranslateKey("connect.authorizing"), Width / 2, Height / 2 - 50, 0xFFFFFF);
+            DrawCenteredString(FontRenderer, _clientHandler.field_1209_a, Width / 2, Height / 2 - 10, 0xFFFFFF);
         }
 
-        base.render(mouseX, mouseY, partialTicks);
-    }
-
-    public override bool doesGuiPauseGame()
-    {
-        return false;
+        base.Render(mouseX, mouseY, partialTicks);
     }
 
     public static ClientNetworkHandler setNetClientHandler(GuiConnecting guiConnecting, ClientNetworkHandler handler)
     {
-        return guiConnecting.clientHandler = handler;
+        return guiConnecting._clientHandler = handler;
     }
 
     public static bool isCancelled(GuiConnecting guiConnecting)
     {
-        return guiConnecting.cancelled;
+        return guiConnecting._cancelled;
     }
 
     public static ClientNetworkHandler getNetClientHandler(GuiConnecting guiConnecting)
     {
-        return guiConnecting.clientHandler;
+        return guiConnecting._clientHandler;
     }
 }

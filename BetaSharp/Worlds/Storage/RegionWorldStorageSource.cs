@@ -3,6 +3,7 @@ using BetaSharp.Util.Maths;
 using BetaSharp.Worlds.Chunks.Storage;
 using java.io;
 using java.util;
+using File = System.IO.File;
 
 namespace BetaSharp.Worlds.Storage;
 
@@ -42,7 +43,7 @@ public class RegionWorldStorageSource : WorldStorageSource
                 {
                     bool var9 = var8.SaveVersion != 19132;
                     string var10 = var8.LevelName;
-                    if (var10 == null || MathHelper.stringNullOrLengthZero(var10))
+                    if (var10 == null || string.IsNullOrEmpty(var10))
                     {
                         var10 = var7;
                     }
@@ -97,41 +98,45 @@ public class RegionWorldStorageSource : WorldStorageSource
         }
         else
         {
-            java.io.File var3 = new java.io.File(var2, "level.dat");
+            java.io.File file = new java.io.File(var2, "level.dat");
             NBTTagCompound var4;
             NBTTagCompound var5;
-            if (var3.exists())
+            if (file.exists())
             {
                 try
                 {
-                    var4 = NbtIo.Read(new FileInputStream(var3));
+                    using var stream = File.OpenRead(file.getAbsolutePath());
+                    var4 = NbtIo.ReadCompressed(stream);
+
                     var5 = var4.GetCompoundTag("Data");
                     long sizeOnDisk = getFolderSizeMB(var2);
                     var wInfo = new WorldProperties(var5);
                     wInfo.SizeOnDisk = sizeOnDisk;
                     return wInfo;
                 }
-                catch (java.lang.Exception var7)
+                catch (java.lang.Exception ex)
                 {
-                    var7.printStackTrace();
+                    ex.printStackTrace();
                 }
             }
 
-            var3 = new java.io.File(var2, "level.dat_old");
-            if (var3.exists())
+            file = new java.io.File(var2, "level.dat_old");
+            if (file.exists())
             {
                 try
                 {
-                    var4 = NbtIo.Read(new FileInputStream(var3));
+                    using var stream = File.OpenRead(file.getAbsolutePath());
+                    var4 = NbtIo.ReadCompressed(stream);
+
                     var5 = var4.GetCompoundTag("Data");
                     long sizeOnDisk = getFolderSizeMB(var2);
                     var wInfo = new WorldProperties(var5);
                     wInfo.SizeOnDisk = sizeOnDisk;
                     return wInfo;
                 }
-                catch (java.lang.Exception var6)
+                catch (java.lang.Exception ex)
                 {
-                    var6.printStackTrace();
+                    ex.printStackTrace();
                 }
             }
 
@@ -144,19 +149,23 @@ public class RegionWorldStorageSource : WorldStorageSource
         java.io.File var3 = new java.io.File(dir, var1);
         if (var3.exists())
         {
-            java.io.File var4 = new java.io.File(var3, "level.dat");
-            if (var4.exists())
+            java.io.File file = new java.io.File(var3, "level.dat");
+            if (file.exists())
             {
                 try
                 {
-                    NBTTagCompound var5 = NbtIo.Read(new FileInputStream(var4));
-                    NBTTagCompound var6 = var5.GetCompoundTag("Data");
+                    using var readingStream = File.OpenRead(file.getAbsolutePath());
+                    NBTTagCompound tag = NbtIo.ReadCompressed(readingStream);
+
+                    NBTTagCompound var6 = tag.GetCompoundTag("Data");
                     var6.SetString("LevelName", var2);
-                    NbtIo.WriteCompressed(var5, new FileOutputStream(var4));
+
+                    using var writingStream = File.OpenWrite(file.getAbsolutePath());
+                    NbtIo.WriteCompressed(tag, writingStream);
                 }
-                catch (java.lang.Exception var7)
+                catch (java.lang.Exception ex)
                 {
-                    var7.printStackTrace();
+                    ex.printStackTrace();
                 }
             }
 

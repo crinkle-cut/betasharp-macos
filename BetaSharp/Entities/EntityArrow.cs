@@ -15,14 +15,14 @@ public class EntityArrow : Entity
     private int xTile = -1;
     private int yTile = -1;
     private int zTile = -1;
-    private int inTile = 0;
-    private int inData = 0;
-    private bool inGround = false;
-    public bool doesArrowBelongToPlayer = false;
-    public int arrowShake = 0;
+    private int inTile;
+    private int inData;
+    private bool inGround;
+    public bool doesArrowBelongToPlayer;
+    public int arrowShake;
     public EntityLiving owner;
     private int ticksInGround;
-    private int ticksInAir = 0;
+    private int ticksInAir;
 
     public EntityArrow(World world) : base(world)
     {
@@ -42,14 +42,14 @@ public class EntityArrow : Entity
         doesArrowBelongToPlayer = owner is EntityPlayer;
         setBoundingBoxSpacing(0.5F, 0.5F);
         setPositionAndAnglesKeepPrevAngles(owner.x, owner.y + (double)owner.getEyeHeight(), owner.z, owner.yaw, owner.pitch);
-        x -= (double)(MathHelper.cos(yaw / 180.0F * (float)System.Math.PI) * 0.16F);
+        x -= (double)(MathHelper.Cos(yaw / 180.0F * (float)System.Math.PI) * 0.16F);
         y -= (double)0.1F;
-        z -= (double)(MathHelper.sin(yaw / 180.0F * (float)System.Math.PI) * 0.16F);
+        z -= (double)(MathHelper.Sin(yaw / 180.0F * (float)System.Math.PI) * 0.16F);
         setPosition(x, y, z);
         standingEyeHeight = 0.0F;
-        velocityX = (double)(-MathHelper.sin(yaw / 180.0F * (float)System.Math.PI) * MathHelper.cos(pitch / 180.0F * (float)System.Math.PI));
-        velocityZ = (double)(MathHelper.cos(yaw / 180.0F * (float)System.Math.PI) * MathHelper.cos(pitch / 180.0F * (float)System.Math.PI));
-        velocityY = (double)(-MathHelper.sin(pitch / 180.0F * (float)System.Math.PI));
+        velocityX = (double)(-MathHelper.Sin(yaw / 180.0F * (float)System.Math.PI) * MathHelper.Cos(pitch / 180.0F * (float)System.Math.PI));
+        velocityZ = (double)(MathHelper.Cos(yaw / 180.0F * (float)System.Math.PI) * MathHelper.Cos(pitch / 180.0F * (float)System.Math.PI));
+        velocityY = (double)(-MathHelper.Sin(pitch / 180.0F * (float)System.Math.PI));
         setArrowHeading(velocityX, velocityY, velocityZ, 1.5F, 1.0F);
     }
 
@@ -59,20 +59,20 @@ public class EntityArrow : Entity
 
     public void setArrowHeading(double x, double y, double z, float speed, float spread)
     {
-        float length = MathHelper.sqrt_double(x * x + y * y + z * z);
+        float length = MathHelper.Sqrt(x * x + y * y + z * z);
         x /= (double)length;
         y /= (double)length;
         z /= (double)length;
-        x += random.nextGaussian() * (double)0.0075F * (double)spread;
-        y += random.nextGaussian() * (double)0.0075F * (double)spread;
-        z += random.nextGaussian() * (double)0.0075F * (double)spread;
+        x += random.NextGaussian() * (double)0.0075F * (double)spread;
+        y += random.NextGaussian() * (double)0.0075F * (double)spread;
+        z += random.NextGaussian() * (double)0.0075F * (double)spread;
         x *= (double)speed;
         y *= (double)speed;
         z *= (double)speed;
         velocityX = x;
         velocityY = y;
         velocityZ = z;
-        float horizontalSpeed = MathHelper.sqrt_double(x * x + z * z);
+        float horizontalSpeed = MathHelper.Sqrt(x * x + z * z);
         prevYaw = yaw = (float)(System.Math.Atan2(x, z) * 180.0D / (double)((float)System.Math.PI));
         prevPitch = pitch = (float)(System.Math.Atan2(y, (double)horizontalSpeed) * 180.0D / (double)((float)System.Math.PI));
         ticksInGround = 0;
@@ -85,7 +85,7 @@ public class EntityArrow : Entity
         base.velocityZ = velocityZ;
         if (prevPitch == 0.0F && prevYaw == 0.0F)
         {
-            float length = MathHelper.sqrt_double(velocityX * velocityX + velocityZ * velocityZ);
+            float length = MathHelper.Sqrt(velocityX * velocityX + velocityZ * velocityZ);
             prevYaw = yaw = (float)(System.Math.Atan2(velocityX, velocityZ) * 180.0D / (double)((float)System.Math.PI));
             prevPitch = pitch = (float)(System.Math.Atan2(velocityY, (double)length) * 180.0D / (double)((float)System.Math.PI));
             prevPitch = pitch;
@@ -101,7 +101,7 @@ public class EntityArrow : Entity
         base.tick();
         if (prevPitch == 0.0F && prevYaw == 0.0F)
         {
-            float length = MathHelper.sqrt_double(velocityX * velocityX + velocityZ * velocityZ);
+            float length = MathHelper.Sqrt(velocityX * velocityX + velocityZ * velocityZ);
             prevYaw = yaw = (float)(System.Math.Atan2(velocityX, velocityZ) * 180.0D / (double)((float)System.Math.PI));
             prevPitch = pitch = (float)(System.Math.Atan2(velocityY, (double)length) * 180.0D / (double)((float)System.Math.PI));
         }
@@ -138,9 +138,9 @@ public class EntityArrow : Entity
             else
             {
                 inGround = false;
-                velocityX *= (double)(random.nextFloat() * 0.2F);
-                velocityY *= (double)(random.nextFloat() * 0.2F);
-                velocityZ *= (double)(random.nextFloat() * 0.2F);
+                velocityX *= (double)(random.NextFloat() * 0.2F);
+                velocityY *= (double)(random.NextFloat() * 0.2F);
+                velocityZ *= (double)(random.NextFloat() * 0.2F);
                 ticksInGround = 0;
                 ticksInAir = 0;
             }
@@ -151,9 +151,9 @@ public class EntityArrow : Entity
             Vec3D rayStart = new Vec3D(x, y, z);
             Vec3D rayEnd = new Vec3D(x + velocityX, y + velocityY, z + velocityZ);
             HitResult hit = world.raycast(rayStart, rayEnd, false, true);
-            if (hit != null)
+            if (hit.Type != HitResultType.MISS)
             {
-                rayEnd = new Vec3D(hit.pos.x, hit.pos.y, hit.pos.z);
+                rayEnd = new Vec3D(hit.Pos.x, hit.Pos.y, hit.Pos.z);
             }
 
             Entity hitEntity = null;
@@ -169,9 +169,9 @@ public class EntityArrow : Entity
                     expandAmount = 0.3F;
                     Box expandedBox = entity.boundingBox.expand((double)expandAmount, (double)expandAmount, (double)expandAmount);
                     HitResult hitResult = expandedBox.raycast(rayStart, rayEnd);
-                    if (hitResult != null)
+                    if (hitResult.Type != HitResultType.MISS)
                     {
-                        double hitDistance = rayStart.distanceTo(hitResult.pos);
+                        double hitDistance = rayStart.distanceTo(hitResult.Pos);
                         if (hitDistance < minHitDistance || minHitDistance == 0.0D)
                         {
                             hitEntity = entity;
@@ -187,13 +187,13 @@ public class EntityArrow : Entity
             }
 
             float horizontalSpeed;
-            if (hit != null)
+            if (hit.Type != HitResultType.MISS)
             {
-                if (hit.entity != null)
+                if (hit.Entity != null)
                 {
-                    if (hit.entity.damage(owner, 4))
+                    if (hit.Entity.damage(owner, 4))
                     {
-                        world.playSound(this, "random.drr", 1.0F, 1.2F / (random.nextFloat() * 0.2F + 0.9F));
+                        world.playSound(this, "random.drr", 1.0F, 1.2F / (random.NextFloat() * 0.2F + 0.9F));
                         markDead();
                     }
                     else
@@ -208,19 +208,19 @@ public class EntityArrow : Entity
                 }
                 else
                 {
-                    xTile = hit.blockX;
-                    yTile = hit.blockY;
-                    zTile = hit.blockZ;
+                    xTile = hit.BlockX;
+                    yTile = hit.BlockY;
+                    zTile = hit.BlockZ;
                     inTile = world.getBlockId(xTile, yTile, zTile);
                     inData = world.getBlockMeta(xTile, yTile, zTile);
-                    velocityX = (double)((float)(hit.pos.x - x));
-                    velocityY = (double)((float)(hit.pos.y - y));
-                    velocityZ = (double)((float)(hit.pos.z - z));
-                    horizontalSpeed = MathHelper.sqrt_double(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
+                    velocityX = (double)((float)(hit.Pos.x - x));
+                    velocityY = (double)((float)(hit.Pos.y - y));
+                    velocityZ = (double)((float)(hit.Pos.z - z));
+                    horizontalSpeed = MathHelper.Sqrt(velocityX * velocityX + velocityY * velocityY + velocityZ * velocityZ);
                     x -= velocityX / (double)horizontalSpeed * (double)0.05F;
                     y -= velocityY / (double)horizontalSpeed * (double)0.05F;
                     z -= velocityZ / (double)horizontalSpeed * (double)0.05F;
-                    world.playSound(this, "random.drr", 1.0F, 1.2F / (random.nextFloat() * 0.2F + 0.9F));
+                    world.playSound(this, "random.drr", 1.0F, 1.2F / (random.NextFloat() * 0.2F + 0.9F));
                     inGround = true;
                     arrowShake = 7;
                 }
@@ -229,7 +229,7 @@ public class EntityArrow : Entity
             x += velocityX;
             y += velocityY;
             z += velocityZ;
-            horizontalSpeed = MathHelper.sqrt_double(velocityX * velocityX + velocityZ * velocityZ);
+            horizontalSpeed = MathHelper.Sqrt(velocityX * velocityX + velocityZ * velocityZ);
             yaw = (float)(System.Math.Atan2(velocityX, velocityZ) * 180.0D / (double)((float)System.Math.PI));
 
             for (pitch = (float)(System.Math.Atan2(velocityY, (double)horizontalSpeed) * 180.0D / (double)((float)System.Math.PI)); pitch - prevPitch < -180.0F; prevPitch -= 360.0F)
@@ -304,7 +304,7 @@ public class EntityArrow : Entity
         {
             if (inGround && doesArrowBelongToPlayer && arrowShake <= 0 && player.inventory.addItemStackToInventory(new ItemStack(Item.ARROW, 1)))
             {
-                world.playSound(this, "random.pop", 0.2F, ((random.nextFloat() - random.nextFloat()) * 0.7F + 1.0F) * 2.0F);
+                world.playSound(this, "random.pop", 0.2F, ((random.NextFloat() - random.NextFloat()) * 0.7F + 1.0F) * 2.0F);
                 player.sendPickup(this, 1);
                 markDead();
             }

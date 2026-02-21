@@ -60,9 +60,9 @@ public class RegionIo : java.lang.Object
                         var2.func_22196_b();
                     }
                 }
-                catch (java.io.IOException var3)
+                catch (java.io.IOException ex)
                 {
-                    var3.printStackTrace();
+                    ex.printStackTrace();
                 }
             }
 
@@ -76,15 +76,15 @@ public class RegionIo : java.lang.Object
         return var3.func_22209_a();
     }
 
-    public static ChunkDataStream getChunkInputStream(java.io.File var0, int var1, int var2)
+    public static ChunkDataStream GetChunkInputStream(java.io.File var0, int var1, int var2)
     {
         RegionFile var3 = func_22193_a(var0, var1, var2);
-        return var3.getChunkDataInputStream(var1 & 31, var2 & 31);
+        return var3.GetChunkDataInputStream(var1 & 31, var2 & 31);
     }
 
-    public static DataOutputStream getChunkOutputStream(java.io.File var0, int var1, int var2)
+    public static Stream GetChunkOutputStream(java.io.File var0, int var1, int var2)
     {
         RegionFile var3 = func_22193_a(var0, var1, var2);
-        return var3.getChunkDataOutputStream(var1 & 31, var2 & 31);
+        return var3.GetChunkDataOutputStream(var1 & 31, var2 & 31);
     }
 }

@@ -6,12 +6,12 @@ namespace BetaSharp.Client.Textures;
 public class NetherPortalSprite : DynamicTexture
 {
 
-    private int ticks = 0;
+    private int ticks;
     private readonly byte[][] frames = new byte[32][];
 
     public NetherPortalSprite() : base(Block.NetherPortal.textureId)
     {
-        java.util.Random var1 = new(100L);
+        JavaRandom var1 = new(100L);
         for (int i = 0; i < frames.Length; i++)
         {
             frames[i] = new byte[1024];
@@ -54,12 +54,12 @@ public class NetherPortalSprite : DynamicTexture
 
                         float var11 = var9 * var9 + var10 * var10;
                         float var12 = (float)java.lang.Math.atan2((double)var10, (double)var9) + (var2 / 32.0F * (float)Math.PI * 2.0F - var11 * 10.0F + var6 * 2) * (var6 * 2 - 1);
-                        var12 = (MathHelper.sin(var12) + 1.0F) / 2.0F;
+                        var12 = (MathHelper.Sin(var12) + 1.0F) / 2.0F;
                         var12 /= var11 + 1.0F;
                         var5 += var12 * 0.5F;
                     }
 
-                    var5 += var1.nextFloat() * 0.1F;
+                    var5 += var1.NextFloat() * 0.1F;
                     var6 = (int)(var5 * 100.0F + 155.0F);
                     int var13 = (int)(var5 * var5 * 200.0F + 55.0F);
                     int var14 = (int)(var5 * var5 * var5 * var5 * 255.0F);

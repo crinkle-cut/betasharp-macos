@@ -36,7 +36,7 @@ public class EntitySkeleton : EntityMonster
         if (world.canMonsterSpawn())
         {
             float brightness = getBrightnessAtEyes(1.0F);
-            if (brightness > 0.5F && world.hasSkyLight(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z)) && random.nextFloat() * 30.0F < (brightness - 0.4F) * 2.0F)
+            if (brightness > 0.5F && world.hasSkyLight(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z)) && random.NextFloat() * 30.0F < (brightness - 0.4F) * 2.0F)
             {
                 fireTicks = 300;
             }
@@ -56,8 +56,8 @@ public class EntitySkeleton : EntityMonster
                 EntityArrow arrow = new EntityArrow(world, this);
                 arrow.y += (double)1.4F;
                 double targetHeightOffset = entity.y + (double)entity.getEyeHeight() - (double)0.2F - arrow.y;
-                float distanceFactor = MathHelper.sqrt_double(dx * dx + dy * dy) * 0.2F;
-                world.playSound(this, "random.bow", 1.0F, 1.0F / (random.nextFloat() * 0.4F + 0.8F));
+                float distanceFactor = MathHelper.Sqrt(dx * dx + dy * dy) * 0.2F;
+                world.playSound(this, "random.bow", 1.0F, 1.0F / (random.NextFloat() * 0.4F + 0.8F));
                 world.SpawnEntity(arrow);
                 arrow.setArrowHeading(dx, targetHeightOffset + (double)distanceFactor, dy, 0.6F, 12.0F);
                 attackTime = 30;
@@ -86,7 +86,7 @@ public class EntitySkeleton : EntityMonster
 
     protected override void dropFewItems()
     {
-        int amount = random.nextInt(3);
+        int amount = random.NextInt(3);
 
         int i;
         for (i = 0; i < amount; ++i)
@@ -94,11 +94,11 @@ public class EntitySkeleton : EntityMonster
             dropItem(Item.ARROW.id, 1);
         }
 
-        amount = random.nextInt(3);
+        amount = random.NextInt(3);
 
         for (i = 0; i < amount; ++i)
         {
-            dropItem(Item.BONE.id, 1);
+            dropItem(Item.Bone.id, 1);
         }
 
     }

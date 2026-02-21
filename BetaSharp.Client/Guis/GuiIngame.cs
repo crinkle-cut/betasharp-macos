@@ -1,3 +1,4 @@
+using BetaSharp.Client.Options;
 using BetaSharp.Blocks;
 using BetaSharp.Blocks.Materials;
 using BetaSharp.Client.Rendering;
@@ -8,83 +9,89 @@ using BetaSharp.Items;
 using BetaSharp.Util;
 using BetaSharp.Util.Maths;
 using java.awt;
-using java.util;
 using Silk.NET.OpenGL.Legacy;
 
 namespace BetaSharp.Client.Guis;
 
 public class GuiIngame : Gui
 {
-    private readonly GCMonitor GCMonitor;
-    private static readonly ItemRenderer itemRenderer = new();
-    private readonly java.util.List chatMessageList = new ArrayList();
-    private readonly java.util.Random rand = new();
-    private readonly Minecraft mc;
-    public string field_933_a = null;
-    private int updateCounter = 0;
-    private string recordPlaying = "";
-    private int recordPlayingUpFor = 0;
-    private bool field_22065_l = false;
-    public float damageGuiPartialTime;
-    float prevVignetteBrightness = 1.0F;
+    private readonly GCMonitor _gcMonitor;
+    private static readonly ItemRenderer _itemRenderer = new();
+    private readonly List<ChatLine> _chatMessageList = new();
+    private readonly JavaRandom _rand = new();
+    private int _chatScrollPos = 0;
+    private bool _chatScrollbarDragging = false;
+    private int _chatScrollbarDragStartY = 0;
+    private int _chatScrollbarDragStartScroll = 0;
+    private readonly Minecraft _mc;
+    public string _hoveredItemName = null;
+    private int _updateCounter = 0;
+    private string _recordPlaying = "";
+    private int _recordPlayingUpFor = 0;
+    private bool _isRecordMessageRainbow = false;
+    public float _damageGuiPartialTime;
+    float PrevVignetteBrightness = 1.0F;
 
     public GuiIngame(Minecraft gameInstance)
     {
-        mc = gameInstance;
-        GCMonitor = new GCMonitor();
+        _mc = gameInstance;
+        _gcMonitor = new GCMonitor();
     }
 
     public void renderGameOverlay(float partialTicks, bool unusedFlag, int unusedA, int unusedB)
     {
-        ScaledResolution scaled = new(mc.options, mc.displayWidth, mc.displayHeight);
+        ScaledResolution scaled = new(_mc.options, _mc.displayWidth, _mc.displayHeight);
         int scaledWidth = scaled.ScaledWidth;
         int scaledHeight = scaled.ScaledHeight;
-        TextRenderer font = mc.fontRenderer;
-        mc.gameRenderer.setupHudRender();
+        TextRenderer font = _mc.fontRenderer;
+        _mc.gameRenderer.setupHudRender();
         GLManager.GL.Enable(GLEnum.Blend);
         if (Minecraft.isFancyGraphicsEnabled())
         {
-            renderVignette(mc.player.getBrightnessAtEyes(partialTicks), scaledWidth, scaledHeight);
+            renderVignette(_mc.player.getBrightnessAtEyes(partialTicks), scaledWidth, scaledHeight);
         }
 
-        ItemStack helmet = mc.player.inventory.armorItemInSlot(3);
-        if (!mc.options.thirdPersonView && helmet != null && helmet.itemId == Block.Pumpkin.id)
+        ItemStack helmet = _mc.player.inventory.armorItemInSlot(3);
+        if (_mc.options.CameraMode == EnumCameraMode.FirstPerson && helmet != null && helmet.itemId == Block.Pumpkin.id)
         {
             renderPumpkinBlur(scaledWidth, scaledHeight);
         }
 
-        float screenDistortion = mc.player.lastScreenDistortion + (mc.player.changeDimensionCooldown - mc.player.lastScreenDistortion) * partialTicks;
+        float screenDistortion = _mc.player.lastScreenDistortion + (_mc.player.changeDimensionCooldown - _mc.player.lastScreenDistortion) * partialTicks;
         if (screenDistortion > 0.0F)
         {
             renderPortalOverlay(screenDistortion, scaledWidth, scaledHeight);
         }
 
         GLManager.GL.Color4(1.0F, 1.0F, 1.0F, 1.0F);
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("/gui/gui.png"));
-        InventoryPlayer inventory = mc.player.inventory;
-        zLevel = -90.0F;
-        drawTexturedModalRect(scaledWidth / 2 - 91, scaledHeight - 22, 0, 0, 182, 22);
-        drawTexturedModalRect(scaledWidth / 2 - 91 - 1 + inventory.selectedSlot * 20, scaledHeight - 22 - 1, 0, 22, 24, 22);
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("/gui/icons.png"));
-        GLManager.GL.Enable(GLEnum.Blend);
-        GLManager.GL.BlendFunc(GLEnum.OneMinusDstColor, GLEnum.OneMinusSrcColor);
-        drawTexturedModalRect(scaledWidth / 2 - 7, scaledHeight / 2 - 7, 0, 0, 16, 16);
-        GLManager.GL.Disable(GLEnum.Blend);
-        bool heartBlink = mc.player.hearts / 3 % 2 == 1;
-        if (mc.player.hearts < 10)
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)_mc.textureManager.GetTextureId("/gui/gui.png"));
+        InventoryPlayer inventory = _mc.player.inventory;
+        _zLevel = -90.0F;
+        DrawTexturedModalRect(scaledWidth / 2 - 91, scaledHeight - 22, 0, 0, 182, 22);
+        DrawTexturedModalRect(scaledWidth / 2 - 91 - 1 + inventory.selectedSlot * 20, scaledHeight - 22 - 1, 0, 22, 24, 22);
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)_mc.textureManager.GetTextureId("/gui/icons.png"));
+        if (_mc.options.CameraMode == EnumCameraMode.FirstPerson)
+        {
+            GLManager.GL.Enable(GLEnum.Blend);
+            GLManager.GL.BlendFunc(GLEnum.OneMinusDstColor, GLEnum.OneMinusSrcColor);
+            DrawTexturedModalRect(scaledWidth / 2 - 7, scaledHeight / 2 - 7, 0, 0, 16, 16);
+            GLManager.GL.Disable(GLEnum.Blend);
+        }
+        bool heartBlink = _mc.player.hearts / 3 % 2 == 1;
+        if (_mc.player.hearts < 10)
         {
             heartBlink = false;
         }
 
-        int health = mc.player.health;
-        int lastHealth = mc.player.lastHealth;
-        rand.setSeed(updateCounter * 312871);
+        int health = _mc.player.health;
+        int lastHealth = _mc.player.lastHealth;
+        _rand.SetSeed(_updateCounter * 312871);
         int armorValue;
         int i;
         int j;
-        if (mc.playerController.shouldDrawHUD())
+        if (_mc.playerController.shouldDrawHUD())
         {
-            armorValue = mc.player.getPlayerArmorValue();
+            armorValue = _mc.player.getPlayerArmorValue();
 
             int k;
             for (i = 0; i < 10; ++i)
@@ -95,17 +102,17 @@ public class GuiIngame : Gui
                     k = scaledWidth / 2 + 91 - i * 8 - 9;
                     if (i * 2 + 1 < armorValue)
                     {
-                        drawTexturedModalRect(k, j, 34, 9, 9, 9);
+                        DrawTexturedModalRect(k, j, 34, 9, 9, 9);
                     }
 
                     if (i * 2 + 1 == armorValue)
                     {
-                        drawTexturedModalRect(k, j, 25, 9, 9, 9);
+                        DrawTexturedModalRect(k, j, 25, 9, 9, 9);
                     }
 
                     if (i * 2 + 1 > armorValue)
                     {
-                        drawTexturedModalRect(k, j, 16, 9, 9, 9);
+                        DrawTexturedModalRect(k, j, 16, 9, 9, 9);
                     }
                 }
 
@@ -118,48 +125,48 @@ public class GuiIngame : Gui
                 int x = scaledWidth / 2 - 91 + i * 8;
                 if (health <= 4)
                 {
-                    j += rand.nextInt(2);
+                    j += _rand.NextInt(2);
                 }
 
-                drawTexturedModalRect(x, j, 16 + blinkIndex * 9, 0, 9, 9);
+                DrawTexturedModalRect(x, j, 16 + blinkIndex * 9, 0, 9, 9);
                 if (heartBlink)
                 {
                     if (i * 2 + 1 < lastHealth)
                     {
-                        drawTexturedModalRect(x, j, 70, 0, 9, 9);
+                        DrawTexturedModalRect(x, j, 70, 0, 9, 9);
                     }
 
                     if (i * 2 + 1 == lastHealth)
                     {
-                        drawTexturedModalRect(x, j, 79, 0, 9, 9);
+                        DrawTexturedModalRect(x, j, 79, 0, 9, 9);
                     }
                 }
 
                 if (i * 2 + 1 < health)
                 {
-                    drawTexturedModalRect(x, j, 52, 0, 9, 9);
+                    DrawTexturedModalRect(x, j, 52, 0, 9, 9);
                 }
 
                 if (i * 2 + 1 == health)
                 {
-                    drawTexturedModalRect(x, j, 61, 0, 9, 9);
+                    DrawTexturedModalRect(x, j, 61, 0, 9, 9);
                 }
             }
 
-            if (mc.player.isInFluid(Material.Water))
+            if (_mc.player.isInFluid(Material.Water))
             {
-                i = (int)java.lang.Math.ceil((mc.player.air - 2) * 10.0D / 300.0D);
-                j = (int)java.lang.Math.ceil(mc.player.air * 10.0D / 300.0D) - i;
+                i = (int)java.lang.Math.ceil((_mc.player.air - 2) * 10.0D / 300.0D);
+                j = (int)java.lang.Math.ceil(_mc.player.air * 10.0D / 300.0D) - i;
 
                 for (k = 0; k < i + j; ++k)
                 {
                     if (k < i)
                     {
-                        drawTexturedModalRect(scaledWidth / 2 - 91 + k * 8, scaledHeight - 32 - 9, 16, 18, 9, 9);
+                        DrawTexturedModalRect(scaledWidth / 2 - 91 + k * 8, scaledHeight - 32 - 9, 16, 18, 9, 9);
                     }
                     else
                     {
-                        drawTexturedModalRect(scaledWidth / 2 - 91 + k * 8, scaledHeight - 32 - 9, 25, 18, 9, 9);
+                        DrawTexturedModalRect(scaledWidth / 2 - 91 + k * 8, scaledHeight - 32 - 9, 25, 18, 9, 9);
                     }
                 }
             }
@@ -181,11 +188,11 @@ public class GuiIngame : Gui
 
         Lighting.turnOff();
         GLManager.GL.Disable(GLEnum.RescaleNormal);
-        if (mc.player.getSleepTimer() > 0)
+        if (_mc.player.getSleepTimer() > 0)
         {
             GLManager.GL.Disable(GLEnum.DepthTest);
             GLManager.GL.Disable(GLEnum.AlphaTest);
-            armorValue = mc.player.getSleepTimer();
+            armorValue = _mc.player.getSleepTimer();
             float sleepAlpha = armorValue / 100.0F;
             if (sleepAlpha > 1.0F)
             {
@@ -193,53 +200,53 @@ public class GuiIngame : Gui
             }
 
             j = (int)(220.0F * sleepAlpha) << 24 | 1052704;
-            drawRect(0, 0, scaledWidth, scaledHeight, (uint)j);
+            DrawRect(0, 0, scaledWidth, scaledHeight, (uint)j);
             GLManager.GL.Enable(GLEnum.AlphaTest);
             GLManager.GL.Enable(GLEnum.DepthTest);
         }
 
         string debugStr;
-        if (mc.options.showDebugInfo)
+        if (_mc.options.ShowDebugInfo)
         {
-            GCMonitor.AllowUpdating = true;
+            _gcMonitor.AllowUpdating = true;
             GLManager.GL.PushMatrix();
             if (Minecraft.hasPaidCheckTime > 0L)
                 GLManager.GL.Translate(0.0F, 32.0F, 0.0F);
 
-            font.drawStringWithShadow("Minecraft Beta 1.7.3 (" + mc.debug + ")", 2, 2, 0x00FFFFFF);
-            font.drawStringWithShadow(mc.func_6262_n(), 2, 22, 0x00FFFFFF);
-            font.drawStringWithShadow(mc.func_6245_o(), 2, 32, 0x00FFFFFF);
-            font.drawStringWithShadow(mc.func_21002_o(), 2, 42, 0x00FFFFFF);
-            long maxMem = GCMonitor.MaxMemoryBytes;
-            long usedMem = GCMonitor.UsedMemoryBytes;
-            long heapMem = GCMonitor.UsedHeapBytes;
+            font.DrawStringWithShadow("Minecraft Beta 1.7.3 (" + _mc.debug + ")", 2, 2, 0xFFFFFF);
+            font.DrawStringWithShadow(_mc.getEntityDebugInfo(), 2, 22, 0xFFFFFF);
+            font.DrawStringWithShadow(_mc.getParticleAndEntityCountDebugInfo(), 2, 32, 0xFFFFFF);
+            font.DrawStringWithShadow(_mc.getWorldDebugInfo(), 2, 42, 0xFFFFFF);
+            long maxMem = _gcMonitor.MaxMemoryBytes;
+            long usedMem = _gcMonitor.UsedMemoryBytes;
+            long heapMem = _gcMonitor.UsedHeapBytes;
             debugStr = "Used memory: " + usedMem * 100L / maxMem + "% (" + usedMem / 1024L / 1024L + "MB) of " + maxMem / 1024L / 1024L + "MB";
-            drawString(font, debugStr, scaledWidth - font.getStringWidth(debugStr) - 2, 2, 14737632);
+            DrawString(font, debugStr, scaledWidth - font.GetStringWidth(debugStr) - 2, 2, 0xE0E0E0);
             debugStr = "GC heap: " + heapMem * 100L / maxMem + "% (" + heapMem / 1024L / 1024L + "MB)";
-            drawString(font, debugStr, scaledWidth - font.getStringWidth(debugStr) - 2, 12, 14737632);
-            drawString(font, "x: " + mc.player.x, 2, 64, 14737632);
-            drawString(font, "y: " + mc.player.y, 2, 72, 14737632);
-            drawString(font, "z: " + mc.player.z, 2, 80, 14737632);
-            drawString(font, "f: " + (MathHelper.floor_double((double)(mc.player.yaw * 4.0F / 360.0F) + 0.5D) & 3), 2, 88, 14737632);
+            DrawString(font, debugStr, scaledWidth - font.GetStringWidth(debugStr) - 2, 12, 0xE0E0E0);
+            DrawString(font, "x: " + _mc.player.x, 2, 64, 0xE0E0E0);
+            DrawString(font, "y: " + _mc.player.y, 2, 72, 0xE0E0E0);
+            DrawString(font, "z: " + _mc.player.z, 2, 80, 0xE0E0E0);
+            DrawString(font, "f: " + (MathHelper.Floor((double)(_mc.player.yaw * 4.0F / 360.0F) + 0.5D) & 3), 2, 88, 0xE0E0E0);
 
-            if (mc.internalServer != null)
+            if (_mc.internalServer != null)
             {
-                drawString(font, $"Server TPS: {mc.internalServer.Tps:F1}", 2, 104, 14737632);
+                DrawString(font, $"Server TPS: {_mc.internalServer.Tps:F1}", 2, 104, 0xE0E0E0);
             }
 
-            int meshY = mc.internalServer != null ? 120 : 104;
-            var cr = mc.terrainRenderer.chunkRenderer;
-            drawString(font, $"Meshes: S: {cr.LoadedMeshes} T: {cr.TranslucentMeshes}", 2, meshY, 14737632);
+            int meshY = _mc.internalServer != null ? 120 : 104;
+            var cr = _mc.terrainRenderer.chunkRenderer;
+            DrawString(font, $"Meshes: S: {cr.LoadedMeshes} T: {cr.TranslucentMeshes}", 2, meshY, 0xE0E0E0);
             GLManager.GL.PopMatrix();
         }
         else
         {
-            GCMonitor.AllowUpdating = false;
+            _gcMonitor.AllowUpdating = false;
         }
 
-        if (recordPlayingUpFor > 0)
+        if (_recordPlayingUpFor > 0)
         {
-            float t = recordPlayingUpFor - partialTicks;
+            float t = _recordPlayingUpFor - partialTicks;
             i = (int)(t * 256.0F / 20.0F);
             if (i > 255)
             {
@@ -252,13 +259,13 @@ public class GuiIngame : Gui
                 GLManager.GL.Translate(scaledWidth / 2, scaledHeight - 48, 0.0F);
                 GLManager.GL.Enable(GLEnum.Blend);
                 GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
-                j = 0x00FFFFFF;
-                if (field_22065_l)
+                j = 0xFFFFFF;
+                if (_isRecordMessageRainbow)
                 {
-                    j = Color.HSBtoRGB(t / 50.0F, 0.7F, 0.6F) & 0x00FFFFFF;
+                    j = Color.HSBtoRGB(t / 50.0F, 0.7F, 0.6F) & 0xFFFFFF;
                 }
 
-                font.drawString(recordPlaying, -font.getStringWidth(recordPlaying) / 2, -4, (uint)(j + (i << 24)));
+                font.DrawString(_recordPlaying, -font.GetStringWidth(_recordPlaying) / 2, -4, (uint)(j + (i << 24)));
                 GLManager.GL.Disable(GLEnum.Blend);
                 GLManager.GL.PopMatrix();
             }
@@ -266,7 +273,7 @@ public class GuiIngame : Gui
 
         byte linesToShow = 10;
         bool chatOpen = false;
-        if (mc.currentScreen is GuiChat)
+        if (_mc.currentScreen is GuiChat)
         {
             linesToShow = 20;
             chatOpen = true;
@@ -278,11 +285,15 @@ public class GuiIngame : Gui
         GLManager.GL.PushMatrix();
         GLManager.GL.Translate(0.0F, scaledHeight - 48, 0.0F);
 
-        for (j = 0; j < chatMessageList.size() && j < linesToShow; ++j)
+        for (j = 0; j < _chatMessageList.Count && j < linesToShow; ++j)
         {
-            if (((ChatLine)chatMessageList.get(j)).UpdateCounter < 200 || chatOpen)
+            int index = j + (chatOpen ? _chatScrollPos : 0);
+            if (index >= _chatMessageList.Count) break;
+
+            ChatLine cl = _chatMessageList[index];
+            if (cl.UpdateCounter < 200 || chatOpen)
             {
-                double d = ((ChatLine)chatMessageList.get(j)).UpdateCounter / 200.0D;
+                double d = cl.UpdateCounter / 200.0D;
                 d = 1.0D - d;
                 d *= 10.0D;
                 if (d < 0.0D)
@@ -306,17 +317,55 @@ public class GuiIngame : Gui
                 {
                     byte left = 2;
                     int y = -j * 9;
-                    debugStr = ((ChatLine)chatMessageList.get(j)).Message;
-                    drawRect(left, y - 1, left + 320, y + 8, (uint)(alpha / 2 << 24));
+                    debugStr = cl.Message;
+                    DrawRect(left, y - 1, left + 320, y + 8, (uint)(alpha / 2 << 24));
                     GLManager.GL.Enable(GLEnum.Blend);
-                    font.drawStringWithShadow(debugStr, left, y, 0x00FFFFFF + (uint)(alpha << 24));
+                    font.DrawStringWithShadow(debugStr, left, y, 0xFFFFFF + (uint)(alpha << 24));
                 }
             }
         }
 
+        // Scrollbar rendering moved below (use absolute GUI coords)
+
         GLManager.GL.PopMatrix();
         GLManager.GL.Enable(GLEnum.AlphaTest);
         GLManager.GL.Disable(GLEnum.Blend);
+
+        // Absolute GUI-coordinate scrollbar (matches mouse input coordinates)
+        if (chatOpen)
+        {
+            int linesToShowAbs = 20;
+            int left = 2;
+            int chatWidth = 320;
+            int scrollbarX = left + chatWidth - 5;
+            int scrollbarWidth = 6;
+            int bottom = scaledHeight - 48 + 6; // 2 pixels before message end
+            int top = scaledHeight - 48 - (linesToShowAbs - 1) * 9;
+            int trackHeight = bottom - top;
+
+            int totalLines = _chatMessageList.Count;
+            int maxScroll = totalLines - linesToShowAbs;
+            if (maxScroll < 0) maxScroll = 0;
+
+            // Only draw scrollbar if there's something to scroll
+            if (maxScroll > 0)
+            {
+                int thumbHeight = 8;
+                if (totalLines > 0)
+                {
+                    int calc = trackHeight * linesToShowAbs / totalLines;
+                    if (calc > thumbHeight) thumbHeight = calc;
+                }
+
+                int thumbY = top;
+                int range = Math.Max(1, trackHeight - thumbHeight);
+                // Inverted: Bottom is newest (0), Top is oldest (maxScroll)
+                thumbY = top + (int)((long)(maxScroll - _chatScrollPos) * range / maxScroll);
+
+                uint thumbColor = _chatScrollbarDragging ? 0xFFAAAAAA : 0xFFCCCCCC;
+                DrawRect(scrollbarX + 1, thumbY, scrollbarX + scrollbarWidth - 1, thumbY + thumbHeight, thumbColor);
+            }
+        }
     }
 
     private void renderPumpkinBlur(int screenWidth, int screenHeight)
@@ -326,7 +375,7 @@ public class GuiIngame : Gui
         GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
         GLManager.GL.Color4(1.0F, 1.0F, 1.0F, 1.0F);
         GLManager.GL.Disable(GLEnum.AlphaTest);
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("%blur%/misc/pumpkinblur.png"));
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)_mc.textureManager.GetTextureId("%blur%/misc/pumpkinblur.png"));
         Tessellator tess = Tessellator.instance;
         tess.startDrawingQuads();
         tess.addVertexWithUV(0.0D, screenHeight, -90.0D, 0.0D, 1.0D);
@@ -353,12 +402,12 @@ public class GuiIngame : Gui
             darkness = 1.0F;
         }
 
-        prevVignetteBrightness = (float)(prevVignetteBrightness + (double)(darkness - prevVignetteBrightness) * 0.01D);
+        PrevVignetteBrightness = (float)(PrevVignetteBrightness + (double)(darkness - PrevVignetteBrightness) * 0.01D);
         GLManager.GL.Disable(GLEnum.DepthTest);
         GLManager.GL.DepthMask(false);
         GLManager.GL.BlendFunc(GLEnum.Zero, GLEnum.OneMinusSrcColor);
-        GLManager.GL.Color4(prevVignetteBrightness, prevVignetteBrightness, prevVignetteBrightness, 1.0F);
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("%blur%/misc/vignette.png"));
+        GLManager.GL.Color4(PrevVignetteBrightness, PrevVignetteBrightness, PrevVignetteBrightness, 1.0F);
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)_mc.textureManager.GetTextureId("%blur%/misc/vignette.png"));
         Tessellator tess = Tessellator.instance;
         tess.startDrawingQuads();
         tess.addVertexWithUV(0.0D, screenHeight, -90.0D, 0.0D, 1.0D);
@@ -386,7 +435,7 @@ public class GuiIngame : Gui
         GLManager.GL.DepthMask(false);
         GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
         GLManager.GL.Color4(1.0F, 1.0F, 1.0F, portalStrength);
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("/terrain.png"));
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)_mc.textureManager.GetTextureId("/terrain.png"));
         float u1 = Block.NetherPortal.textureId % 16 / 16.0F;
         float v1 = Block.NetherPortal.textureId / 16 / 16.0F;
         float u2 = (Block.NetherPortal.textureId % 16 + 1) / 16.0F;
@@ -406,7 +455,7 @@ public class GuiIngame : Gui
 
     private void renderInventorySlot(int slotIndex, int x, int y, float partialTicks)
     {
-        ItemStack stack = mc.player.inventory.main[slotIndex];
+        ItemStack stack = _mc.player.inventory.main[slotIndex];
         if (stack != null)
         {
             float bob = stack.bobbingAnimationTime - partialTicks;
@@ -419,35 +468,97 @@ public class GuiIngame : Gui
                 GLManager.GL.Translate(-(x + 8), -(y + 12), 0.0F);
             }
 
-            itemRenderer.renderItemIntoGUI(mc.fontRenderer, mc.textureManager, stack, x, y);
+            _itemRenderer.renderItemIntoGUI(_mc.fontRenderer, _mc.textureManager, stack, x, y);
             if (bob > 0.0F)
             {
                 GLManager.GL.PopMatrix();
             }
 
-            itemRenderer.renderItemOverlayIntoGUI(mc.fontRenderer, mc.textureManager, stack, x, y);
+            _itemRenderer.renderItemOverlayIntoGUI(_mc.fontRenderer, _mc.textureManager, stack, x, y);
         }
     }
 
     public void updateTick()
     {
-        if (recordPlayingUpFor > 0)
+        if (_recordPlayingUpFor > 0)
         {
-            --recordPlayingUpFor;
+            --_recordPlayingUpFor;
         }
 
-        ++updateCounter;
+        ++_updateCounter;
 
-        for (int i = 0; i < chatMessageList.size(); ++i)
+        for (int i = 0; i < _chatMessageList.Count; ++i)
         {
-            ++((ChatLine)chatMessageList.get(i)).UpdateCounter;
+            ++_chatMessageList[i].UpdateCounter;
         }
 
     }
 
+    public void startChatScrollbarDrag(int mouseY, int scaledHeight)
+    {
+        // mouseY and scaledHeight are in scaled GUI coords coming from GuiChat
+        int linesToShow = 20;
+        int left = 2;
+        int chatWidth = 320;
+        int scrollbarX = left + chatWidth - 5;
+        int scrollbarWidth = 6;
+        int bottom = scaledHeight - 48 + 6; // 2 pixels before message end
+        int top = scaledHeight - 48 - (linesToShow - 1) * 9;
+        int scrollbarHeight = bottom - top;
+
+        if (mouseY < top || mouseY > bottom)
+        {
+            return;
+        }
+
+        _chatScrollbarDragging = true;
+        _chatScrollbarDragStartY = mouseY;
+        _chatScrollbarDragStartScroll = _chatScrollPos;
+    }
+
+    public void updateChatScrollbarDrag(int mouseY, int scaledHeight)
+    {
+        if (!_chatScrollbarDragging) return;
+
+        int linesToShow = 20;
+        int left = 2;
+        int chatWidth = 320;
+        int bottom = scaledHeight - 48 + 6; // 2 pixels before message end
+        int top = scaledHeight - 48 - (linesToShow - 1) * 9;
+        int scrollbarHeight = bottom - top;
+
+        int totalLines = _chatMessageList.Count;
+        int maxScroll = totalLines - linesToShow;
+        if (maxScroll < 0) maxScroll = 0;
+
+        int thumbHeight = 8;
+        if (totalLines > 0)
+        {
+            int calc = scrollbarHeight * linesToShow / totalLines;
+            if (calc > thumbHeight) thumbHeight = calc;
+        }
+
+        int range = Math.Max(1, scrollbarHeight - thumbHeight);
+
+        // Compute new scroll based on mouse position within scrollbar
+        int rel = mouseY - top;
+        if (rel < 0) rel = 0;
+        if (rel > scrollbarHeight - thumbHeight) rel = scrollbarHeight - thumbHeight;
+
+        // Inverted: Top is oldest (maxScroll), Bottom is newest (0)
+        int newScroll = maxScroll - (int)((long)rel * maxScroll / range);
+        if (newScroll < 0) newScroll = 0;
+        if (newScroll > maxScroll) newScroll = maxScroll;
+        _chatScrollPos = newScroll;
+    }
+
+    public void stopChatScrollbarDrag()
+    {
+        _chatScrollbarDragging = false;
+    }
     public void clearChatMessages()
     {
-        chatMessageList.clear();
+        _chatMessageList.Clear();
     }
 
     public void addChatMessage(string message)
@@ -460,36 +571,52 @@ public class GuiIngame : Gui
 
     private void addWrappedChatMessage(string message)
     {
-        while (mc.fontRenderer.getStringWidth(message) > 320)
+        while (_mc.fontRenderer.GetStringWidth(message) > 320)
         {
             int i;
-            for (i = 1; i < message.Length && mc.fontRenderer.getStringWidth(message.Substring(0, i + 1)) <= 320; ++i)
+            for (i = 1; i < message.Length && _mc.fontRenderer.GetStringWidth(message.Substring(0, i + 1)) <= 320; ++i)
             {
             }
 
-            chatMessageList.add(0, new ChatLine(message.Substring(0, i)));
+            _chatMessageList.Insert(0, new ChatLine(message.Substring(0, i)));
             message = message.Substring(i);
         }
 
-        chatMessageList.add(0, new ChatLine(message));
+        _chatMessageList.Insert(0, new ChatLine(message));
+        // Reset scroll to show newest messages when new message arrives
+        _chatScrollPos = 0;
 
-        while (chatMessageList.size() > 50)
+        // Keep recent history (increase to 64 messages)
+        while (_chatMessageList.Count > 64)
         {
-            chatMessageList.remove(chatMessageList.size() - 1);
+            _chatMessageList.RemoveAt(_chatMessageList.Count - 1);
         }
     }
 
     public void setRecordPlayingMessage(string recordName)
     {
-        recordPlaying = "Now playing: " + recordName;
-        recordPlayingUpFor = 60;
-        field_22065_l = true;
+        _recordPlaying = "Now playing: " + recordName;
+        _recordPlayingUpFor = 60;
+        _isRecordMessageRainbow = true;
     }
 
     public void addChatMessageTranslate(string key)
     {
-        TranslationStorage translations = TranslationStorage.getInstance();
-        string translated = translations.translateKey(key);
+        TranslationStorage translations = TranslationStorage.Instance;
+        string translated = translations.TranslateKey(key);
         addChatMessage(translated);
     }
+
+    public void scrollChat(int amount)
+    {
+        if (amount == 0) return;
+        // When scrolling, assume chat open with up to 20 visible lines
+        int linesToShow = 20;
+        int maxScroll = _chatMessageList.Count - linesToShow;
+        if (maxScroll < 0) maxScroll = 0;
+        _chatScrollPos += amount;
+        if (_chatScrollPos < 0) _chatScrollPos = 0;
+        if (_chatScrollPos > maxScroll) _chatScrollPos = maxScroll;
+    }
+
 }

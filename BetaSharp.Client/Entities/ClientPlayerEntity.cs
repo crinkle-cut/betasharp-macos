@@ -1,4 +1,4 @@
-using BetaSharp.Blocks.Entities;
+﻿using BetaSharp.Blocks.Entities;
 using BetaSharp.Client.Achievements;
 using BetaSharp.Client.Entities.FX;
 using BetaSharp.Client.Guis;
@@ -69,7 +69,7 @@ public class ClientPlayerEntity : EntityPlayer
 
             if (changeDimensionCooldown == 0.0F)
             {
-                mc.sndManager.playSoundFX("portal.trigger", 1.0F, random.nextFloat() * 0.4F + 0.8F);
+                mc.sndManager.PlaySoundFX("portal.trigger", 1.0F, random.NextFloat() * 0.4F + 0.8F);
             }
 
             changeDimensionCooldown += 0.0125F;
@@ -252,9 +252,9 @@ public class ClientPlayerEntity : EntityPlayer
 
     protected override bool pushOutOfBlocks(double posX, double posY, double posZ)
     {
-        int floorX = MathHelper.floor_double(posX);
-        int floorY = MathHelper.floor_double(posY);
-        int floorZ = MathHelper.floor_double(posZ);
+        int floorX = MathHelper.Floor(posX);
+        int floorY = MathHelper.Floor(posY);
+        int floorZ = MathHelper.Floor(posZ);
         double fracX = posX - (double)floorX;
         double fracZ = posZ - (double)floorZ;
         if (isBlockTranslucent(floorX, floorY, floorZ) || isBlockTranslucent(floorX, floorY + 1, floorZ))

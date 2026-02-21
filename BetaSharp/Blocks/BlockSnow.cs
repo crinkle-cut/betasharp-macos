@@ -19,7 +19,7 @@ public class BlockSnow : Block
     {
         int meta = world.getBlockMeta(x, y, z) & 7;
         return meta >= 3 ?
-            new Box((double)x + minX, (double)y + minY, (double)z + minZ, (double)x + maxX, (double)((float)y + 0.5F), (double)z + maxZ) :
+            new Box(x + BoundingBox.minX, y + BoundingBox.minY, z + BoundingBox.minZ, x + BoundingBox.maxX, (double)((float)y + 0.5F), z + BoundingBox.maxZ) :
             null;
     }
 
@@ -67,11 +67,11 @@ public class BlockSnow : Block
 
     public override void afterBreak(World world, EntityPlayer player, int x, int y, int z, int meta)
     {
-        int snowballId = Item.SNOWBALL.id;
+        int snowballId = Item.Snowball.id;
         float spreadFactor = 0.7F;
-        double offsetX = (double)(world.random.nextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
-        double offsetY = (double)(world.random.nextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
-        double offsetZ = (double)(world.random.nextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
+        double offsetX = (double)(world.random.NextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
+        double offsetY = (double)(world.random.NextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
+        double offsetZ = (double)(world.random.NextFloat() * spreadFactor) + (double)(1.0F - spreadFactor) * 0.5D;
         EntityItem entityItem = new EntityItem(world, (double)x + offsetX, (double)y + offsetY, (double)z + offsetZ, new ItemStack(snowballId, 1, 0));
         entityItem.delayBeforeCanPickup = 10;
         world.SpawnEntity(entityItem);
@@ -79,17 +79,17 @@ public class BlockSnow : Block
         player.increaseStat(Stats.Stats.mineBlockStatArray[id], 1);
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
-        return Item.SNOWBALL.id;
+        return Item.Snowball.id;
     }
 
-    public override int getDroppedItemCount(java.util.Random random)
+    public override int getDroppedItemCount(JavaRandom random)
     {
         return 0;
     }
 
-    public override void onTick(World world, int x, int y, int z, java.util.Random random)
+    public override void onTick(World world, int x, int y, int z, JavaRandom random)
     {
         if (world.getBrightness(LightType.Block, x, y, z) > 11)
         {

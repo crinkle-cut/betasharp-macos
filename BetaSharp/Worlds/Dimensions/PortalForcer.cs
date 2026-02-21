@@ -6,7 +6,7 @@ namespace BetaSharp.Worlds.Dimensions;
 
 public class PortalForcer
 {
-    private java.util.Random random = new();
+    private JavaRandom random = new();
 
     public void moveToPortal(World world, Entity entity)
     {
@@ -24,8 +24,8 @@ public class PortalForcer
         int var6 = 0;
         int var7 = 0;
         int var8 = 0;
-        int var9 = MathHelper.floor_double(entity.x);
-        int var10 = MathHelper.floor_double(entity.z);
+        int var9 = MathHelper.Floor(entity.x);
+        int var10 = MathHelper.Floor(entity.z);
 
         double var18;
         for (int var11 = var9 - var3; var11 <= var9 + var3; ++var11)
@@ -98,14 +98,14 @@ public class PortalForcer
     {
         byte var3 = 16;
         double var4 = -1.0D;
-        int var6 = MathHelper.floor_double(entity.x);
-        int var7 = MathHelper.floor_double(entity.y);
-        int var8 = MathHelper.floor_double(entity.z);
+        int var6 = MathHelper.Floor(entity.x);
+        int var7 = MathHelper.Floor(entity.y);
+        int var8 = MathHelper.Floor(entity.z);
         int var9 = var6;
         int var10 = var7;
         int var11 = var8;
         int var12 = 0;
-        int var13 = random.nextInt(4);
+        int var13 = random.NextInt(4);
 
         int var14;
         double var15;

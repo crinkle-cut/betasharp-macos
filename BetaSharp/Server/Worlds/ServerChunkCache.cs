@@ -7,64 +7,64 @@ namespace BetaSharp.Server.Worlds;
 
 public class ServerChunkCache : ChunkSource
 {
-    private readonly HashSet<int> chunksToUnload = [];
-    private readonly Chunk empty;
-    private readonly ChunkSource generator;
-    private readonly ChunkStorage storage;
+    private readonly HashSet<int> _chunksToUnload = [];
+    private readonly Chunk _empty;
+    private readonly ChunkSource _generator;
+    private readonly ChunkStorage _storage;
     public bool forceLoad = false;
-    private readonly Dictionary<int, Chunk> chunksByPos = [];
-    private readonly List<Chunk> chunks = [];
-    private readonly ServerWorld world;
+    private readonly Dictionary<int, Chunk> _chunksByPos = [];
+    private readonly List<Chunk> _chunks = [];
+    private readonly ServerWorld _world;
 
     public ServerChunkCache(ServerWorld world, ChunkStorage storage, ChunkSource generator)
     {
-        empty = new EmptyChunk(world, new byte[32768], 0, 0);
-        this.world = world;
-        this.storage = storage;
-        this.generator = generator;
+        _empty = new EmptyChunk(world, new byte[32768], 0, 0);
+        _world = world;
+        _storage = storage;
+        _generator = generator;
     }
 
 
-    public bool isChunkLoaded(int x, int z)
+    public bool IsChunkLoaded(int x, int z)
     {
-        return chunksByPos.ContainsKey(ChunkPos.hashCode(x, z));
+        return _chunksByPos.ContainsKey(ChunkPos.hashCode(x, z));
     }
 
     public void isLoaded(int chunkX, int chunkZ)
     {
-        Vec3i var3 = world.getSpawnPos();
+        Vec3i var3 = _world.getSpawnPos();
         int var4 = chunkX * 16 + 8 - var3.x;
         int var5 = chunkZ * 16 + 8 - var3.z;
         short var6 = 128;
         if (var4 < -var6 || var4 > var6 || var5 < -var6 || var5 > var6)
         {
-            chunksToUnload.Add(ChunkPos.hashCode(chunkX, chunkZ));
+            _chunksToUnload.Add(ChunkPos.hashCode(chunkX, chunkZ));
         }
     }
 
 
-    public Chunk loadChunk(int chunkX, int chunkZ)
+    public Chunk LoadChunk(int chunkX, int chunkZ)
     {
         int var3 = ChunkPos.hashCode(chunkX, chunkZ);
-        chunksToUnload.Remove(var3);
-        chunksByPos.TryGetValue(var3, out Chunk? var4);
+        _chunksToUnload.Remove(var3);
+        _chunksByPos.TryGetValue(var3, out Chunk? var4);
         if (var4 == null)
         {
-            var4 = loadChunkFromStorage(chunkX, chunkZ);
+            var4 = LoadChunkFromStorage(chunkX, chunkZ);
             if (var4 == null)
             {
-                if (generator == null)
+                if (_generator == null)
                 {
-                    var4 = empty;
+                    var4 = _empty;
                 }
                 else
                 {
-                    var4 = generator.getChunk(chunkX, chunkZ);
+                    var4 = _generator.GetChunk(chunkX, chunkZ);
                 }
             }
 
-            chunksByPos.Add(var3, var4);
-            chunks.Add(var4);
+            _chunksByPos.Add(var3, var4);
+            _chunks.Add(var4);
             if (var4 != null)
             {
                 var4.populateBlockLight();
@@ -72,38 +72,38 @@ public class ServerChunkCache : ChunkSource
             }
 
             if (!var4.terrainPopulated
-                && isChunkLoaded(chunkX + 1, chunkZ + 1)
-                && isChunkLoaded(chunkX, chunkZ + 1)
-                && isChunkLoaded(chunkX + 1, chunkZ))
+                && IsChunkLoaded(chunkX + 1, chunkZ + 1)
+                && IsChunkLoaded(chunkX, chunkZ + 1)
+                && IsChunkLoaded(chunkX + 1, chunkZ))
             {
-                decorate(this, chunkX, chunkZ);
+                DecorateTerrain(this, chunkX, chunkZ);
             }
 
-            if (isChunkLoaded(chunkX - 1, chunkZ)
-                && !getChunk(chunkX - 1, chunkZ).terrainPopulated
-                && isChunkLoaded(chunkX - 1, chunkZ + 1)
-                && isChunkLoaded(chunkX, chunkZ + 1)
-                && isChunkLoaded(chunkX - 1, chunkZ))
+            if (IsChunkLoaded(chunkX - 1, chunkZ)
+                && !GetChunk(chunkX - 1, chunkZ).terrainPopulated
+                && IsChunkLoaded(chunkX - 1, chunkZ + 1)
+                && IsChunkLoaded(chunkX, chunkZ + 1)
+                && IsChunkLoaded(chunkX - 1, chunkZ))
             {
-                decorate(this, chunkX - 1, chunkZ);
+                DecorateTerrain(this, chunkX - 1, chunkZ);
             }
 
-            if (isChunkLoaded(chunkX, chunkZ - 1)
-                && !getChunk(chunkX, chunkZ - 1).terrainPopulated
-                && isChunkLoaded(chunkX + 1, chunkZ - 1)
-                && isChunkLoaded(chunkX, chunkZ - 1)
-                && isChunkLoaded(chunkX + 1, chunkZ))
+            if (IsChunkLoaded(chunkX, chunkZ - 1)
+                && !GetChunk(chunkX, chunkZ - 1).terrainPopulated
+                && IsChunkLoaded(chunkX + 1, chunkZ - 1)
+                && IsChunkLoaded(chunkX, chunkZ - 1)
+                && IsChunkLoaded(chunkX + 1, chunkZ))
             {
-                decorate(this, chunkX, chunkZ - 1);
+                DecorateTerrain(this, chunkX, chunkZ - 1);
             }
 
-            if (isChunkLoaded(chunkX - 1, chunkZ - 1)
-                && !getChunk(chunkX - 1, chunkZ - 1).terrainPopulated
-                && isChunkLoaded(chunkX - 1, chunkZ - 1)
-                && isChunkLoaded(chunkX, chunkZ - 1)
-                && isChunkLoaded(chunkX - 1, chunkZ))
+            if (IsChunkLoaded(chunkX - 1, chunkZ - 1)
+                && !GetChunk(chunkX - 1, chunkZ - 1).terrainPopulated
+                && IsChunkLoaded(chunkX - 1, chunkZ - 1)
+                && IsChunkLoaded(chunkX, chunkZ - 1)
+                && IsChunkLoaded(chunkX - 1, chunkZ))
             {
-                decorate(this, chunkX - 1, chunkZ - 1);
+                DecorateTerrain(this, chunkX - 1, chunkZ - 1);
             }
         }
 
@@ -111,12 +111,12 @@ public class ServerChunkCache : ChunkSource
     }
 
 
-    public Chunk getChunk(int chunkX, int chunkZ)
+    public Chunk GetChunk(int chunkX, int chunkZ)
     {
-        chunksByPos.TryGetValue(ChunkPos.hashCode(chunkX, chunkZ), out Chunk? var3);
+        _chunksByPos.TryGetValue(ChunkPos.hashCode(chunkX, chunkZ), out Chunk? var3);
         if (var3 == null)
         {
-            return !world.eventProcessingEnabled && !forceLoad ? empty : loadChunk(chunkX, chunkZ);
+            return !_world.eventProcessingEnabled && !forceLoad ? _empty : LoadChunk(chunkX, chunkZ);
         }
         else
         {
@@ -124,9 +124,9 @@ public class ServerChunkCache : ChunkSource
         }
     }
 
-    private Chunk loadChunkFromStorage(int chunkX, int chunkZ)
+    private Chunk? LoadChunkFromStorage(int chunkX, int chunkZ)
     {
-        if (storage == null)
+        if (_storage == null)
         {
             return null;
         }
@@ -134,17 +134,14 @@ public class ServerChunkCache : ChunkSource
         {
             try
             {
-                Chunk var3 = storage.loadChunk(world, chunkX, chunkZ);
-                if (var3 != null)
-                {
-                    var3.lastSaveTime = world.getTime();
-                }
+                Chunk var3 = _storage.LoadChunk(_world, chunkX, chunkZ);
+                var3?.lastSaveTime = _world.getTime();
 
                 return var3;
             }
-            catch (java.lang.Exception var4)
+            catch (Exception ex)
             {
-                var4.printStackTrace();
+                Log.Error(ex);
                 return null;
             }
         }
@@ -152,45 +149,49 @@ public class ServerChunkCache : ChunkSource
 
     private void saveEntities(Chunk chunk)
     {
-        if (storage != null)
+        if (_storage != null)
         {
             try
             {
-                storage.saveEntities(world, chunk);
+                _storage.saveEntities(_world, chunk);
             }
-            catch (java.lang.Exception var3)
+            catch (Exception ex)
             {
-                var3.printStackTrace();
+                Log.Error(ex);
             }
         }
     }
 
     private void saveChunk(Chunk chunk)
     {
-        if (storage != null)
+        if (_storage != null)
         {
             try
             {
-                chunk.lastSaveTime = world.getTime();
-                storage.saveChunk(world, chunk, null, -1);
+                chunk.lastSaveTime = _world.getTime();
+                _storage.saveChunk(_world, chunk, null, -1);
             }
-            catch (java.io.IOException var3)
+            catch (java.io.IOException ex)
             {
-                var3.printStackTrace();
+                ex.printStackTrace();
+            }
+            catch (IOException ex)
+            {
+                Log.Error(ex);
             }
         }
     }
 
 
-    public void decorate(ChunkSource source, int x, int z)
+    public void DecorateTerrain(ChunkSource source, int x, int z)
     {
-        Chunk var4 = getChunk(x, z);
+        Chunk var4 = GetChunk(x, z);
         if (!var4.terrainPopulated)
         {
             var4.terrainPopulated = true;
-            if (generator != null)
+            if (_generator != null)
             {
-                generator.decorate(source, x, z);
+                _generator.DecorateTerrain(source, x, z);
                 var4.markDirty();
             }
         }
@@ -201,9 +202,9 @@ public class ServerChunkCache : ChunkSource
     {
         int var3 = 0;
 
-        for (int var4 = 0; var4 < chunks.Count; var4++)
+        for (int var4 = 0; var4 < _chunks.Count; var4++)
         {
-            Chunk var5 = chunks[var4];
+            Chunk var5 = _chunks[var4];
             if (saveEntities && !var5.empty)
             {
                 this.saveEntities(var5);
@@ -222,12 +223,12 @@ public class ServerChunkCache : ChunkSource
 
         if (saveEntities)
         {
-            if (storage == null)
+            if (_storage == null)
             {
                 return true;
             }
 
-            storage.flush();
+            _storage.flush();
         }
 
         return true;
@@ -236,36 +237,33 @@ public class ServerChunkCache : ChunkSource
 
     public bool tick()
     {
-        if (!world.savingDisabled)
+        if (!_world.savingDisabled)
         {
             for (int var1 = 0; var1 < 100; var1++)
             {
-                if (chunksToUnload.Count > 0)
+                if (_chunksToUnload.Count > 0)
                 {
-                    int var2 = chunksToUnload.First();
-                    Chunk var3 = chunksByPos[var2];
+                    int var2 = _chunksToUnload.First();
+                    Chunk var3 = _chunksByPos[var2];
                     var3.unload();
                     saveChunk(var3);
                     saveEntities(var3);
-                    chunksToUnload.Remove(var2);
-                    chunksByPos.Remove(var2);
-                    chunks.Remove(var3);
+                    _chunksToUnload.Remove(var2);
+                    _chunksByPos.Remove(var2);
+                    _chunks.Remove(var3);
                 }
             }
 
-            if (storage != null)
-            {
-                storage.tick();
-            }
+            _storage?.tick();
         }
 
-        return generator.tick();
+        return _generator.tick();
     }
 
 
     public bool canSave()
     {
-        return !world.savingDisabled;
+        return !_world.savingDisabled;
     }
 
     public void markChunksForUnload(int renderDistanceChunks)

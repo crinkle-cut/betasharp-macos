@@ -1,4 +1,4 @@
-using BetaSharp.Blocks.Entities;
+﻿using BetaSharp.Blocks.Entities;
 using BetaSharp.Blocks.Materials;
 using BetaSharp.Entities;
 using BetaSharp.Util.Maths;
@@ -74,7 +74,7 @@ public class BlockPistonMoving : BlockWithEntity
         }
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
         return 0;
     }
@@ -142,12 +142,7 @@ public class BlockPistonMoving : BlockWithEntity
             }
 
             int var8 = var5.getFacing();
-            minX = var6.minX - (double)((float)PistonConstants.HEAD_OFFSET_X[var8] * var7);
-            minY = var6.minY - (double)((float)PistonConstants.HEAD_OFFSET_Y[var8] * var7);
-            minZ = var6.minZ - (double)((float)PistonConstants.HEAD_OFFSET_Z[var8] * var7);
-            maxX = var6.maxX - (double)((float)PistonConstants.HEAD_OFFSET_X[var8] * var7);
-            maxY = var6.maxY - (double)((float)PistonConstants.HEAD_OFFSET_Y[var8] * var7);
-            maxZ = var6.maxZ - (double)((float)PistonConstants.HEAD_OFFSET_Z[var8] * var7);
+            BoundingBox = BoundingBox.offset(-(double)(PistonConstants.HEAD_OFFSET_X[var8] * var7), -(double)(PistonConstants.HEAD_OFFSET_Y[var8] * var7), -(double)(PistonConstants.HEAD_OFFSET_Z[var8] * var7));
         }
 
     }

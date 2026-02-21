@@ -10,127 +10,128 @@ namespace BetaSharp.Client.Guis;
 
 public class GuiEditSign : GuiScreen
 {
+    private const string ScreenTitle = "Edit sign message:";
+    private const int ButtonDoneId = 0;
+    private const int MaxLineLength = 15;
 
-    protected string screenTitle = "Edit sign message:";
-    private readonly BlockEntitySign entitySign;
-    private int updateCounter;
-    private int editLine = 0;
-    private static readonly string allowedCharacters = ChatAllowedCharacters.allowedCharacters;
+    private readonly BlockEntitySign _entitySign;
+    private int _updateCounter;
+    private int _editLine = 0;
+    private static readonly string s_allowedCharacters = ChatAllowedCharacters.allowedCharacters;
 
     public GuiEditSign(BlockEntitySign sign)
     {
-        entitySign = sign;
+        _entitySign = sign;
     }
 
-    private const int BUTTON_DONE = 0;
-
-    public override void initGui()
+    public override void InitGui()
     {
-        controlList.clear();
+        _controlList.Clear();
         Keyboard.enableRepeatEvents(true);
-        controlList.add(new GuiButton(BUTTON_DONE, width / 2 - 100, height / 4 + 120, "Done"));
+        _controlList.Add(new GuiButton(ButtonDoneId, Width / 2 - 100, Height / 4 + 120, "Done"));
     }
 
-    public override void onGuiClosed()
+    public override void OnGuiClosed()
     {
         Keyboard.enableRepeatEvents(false);
-        if (mc.world.isRemote)
+        if (mc?.world?.isRemote ?? false)
         {
-            mc.getSendQueue().addToSendQueue(new UpdateSignPacket(entitySign.x, entitySign.y, entitySign.z, entitySign.Texts));
+            mc.getSendQueue().addToSendQueue(new UpdateSignPacket(_entitySign.x, _entitySign.y, _entitySign.z, _entitySign.Texts));
+        }
+    }
+
+    public override void UpdateScreen()
+    {
+        ++_updateCounter;
+    }
+
+    protected override void ActionPerformed(GuiButton button)
+    {
+        if (button.Enabled && button.Id == ButtonDoneId)
+        {
+            _entitySign.markDirty();
+            mc?.displayGuiScreen(null);
+        }
+    }
+
+    protected override void KeyTyped(char eventChar, int eventKey)
+    {
+        if (eventKey == Keyboard.KEY_UP)
+        {
+            _editLine = _editLine - 1 & 3;
+            return;
         }
 
-    }
-
-    public override void updateScreen()
-    {
-        ++updateCounter;
-    }
-
-    protected override void actionPerformed(GuiButton button)
-    {
-        if (button.enabled)
+        if (eventKey == Keyboard.KEY_DOWN || eventKey == Keyboard.KEY_RETURN)
         {
-            switch (button.id)
+            _editLine = _editLine + 1 & 3;
+            return;
+        }
+
+        if (eventKey == Keyboard.KEY_BACK)
+        {
+            if (_entitySign.Texts[_editLine].Length > 0)
             {
-                case BUTTON_DONE:
-                    entitySign.markDirty();
-                    mc.displayGuiScreen(null);
-                    break;
+                _entitySign.Texts[_editLine] = _entitySign.Texts[_editLine].Substring(0, _entitySign.Texts[_editLine].Length - 1);
             }
+            return;
+        }
+
+        if (eventKey == Keyboard.KEY_ESCAPE)
+        {
+            _entitySign.markDirty();
+            mc?.displayGuiScreen(null);
+            return;
+        }
+
+        if (s_allowedCharacters.IndexOf(eventChar) >= 0 && _entitySign.Texts[_editLine].Length < MaxLineLength)
+        {
+            _entitySign.Texts[_editLine] += eventChar;
         }
     }
 
-    protected override void keyTyped(char eventChar, int eventKey)
+    public override void Render(int mouseX, int mouseY, float partialTicks)
     {
-        if (eventKey == 200)
+        DrawDefaultBackground();
+        if (FontRenderer != null)
         {
-            editLine = editLine - 1 & 3;
+            DrawCenteredString(FontRenderer, ScreenTitle, Width / 2, 40, 0xFFFFFF);
         }
 
-        if (eventKey == 208 || eventKey == 28)
-        {
-            editLine = editLine + 1 & 3;
-        }
-
-        if (eventKey == 14 && entitySign.Texts[editLine].Length > 0)
-        {
-            entitySign.Texts[editLine] = entitySign.Texts[editLine].Substring(0, entitySign.Texts[editLine].Length - 1);
-        }
-
-        if (allowedCharacters.IndexOf(eventChar) >= 0 && entitySign.Texts[editLine].Length < 15)
-        {
-            entitySign.Texts[editLine] = entitySign.Texts[editLine] + eventChar;
-        }
-
-    }
-
-    public override void render(int mouseX, int mouseY, float partialTicks)
-    {
-        drawDefaultBackground();
-        drawCenteredString(fontRenderer, screenTitle, width / 2, 40, 0x00FFFFFF);
         GLManager.GL.PushMatrix();
-        GLManager.GL.Translate(width / 2, 0.0F, 50.0F);
+        GLManager.GL.Translate(Width / 2, 0.0F, 50.0F);
         float scale = 93.75F;
         GLManager.GL.Scale(-scale, -scale, -scale);
         GLManager.GL.Rotate(180.0F, 0.0F, 1.0F, 0.0F);
-        Block signBlock = entitySign.getBlock();
+
+        Block signBlock = _entitySign.getBlock();
         if (signBlock == Block.Sign)
         {
-            float rotation = entitySign.getPushedBlockData() * 360 / 16.0F;
+            float rotation = _entitySign.getPushedBlockData() * 360 / 16.0F;
             GLManager.GL.Rotate(rotation, 0.0F, 1.0F, 0.0F);
             GLManager.GL.Translate(0.0F, -1.0625F, 0.0F);
         }
         else
         {
-            int rotationIndex = entitySign.getPushedBlockData();
+            int rotationIndex = _entitySign.getPushedBlockData();
             float angle = 0.0F;
-            if (rotationIndex == 2)
-            {
-                angle = 180.0F;
-            }
-
-            if (rotationIndex == 4)
-            {
-                angle = 90.0F;
-            }
-
-            if (rotationIndex == 5)
-            {
-                angle = -90.0F;
-            }
+            if (rotationIndex == 2) angle = 180.0F;
+            if (rotationIndex == 4) angle = 90.0F;
+            if (rotationIndex == 5) angle = -90.0F;
 
             GLManager.GL.Rotate(angle, 0.0F, 1.0F, 0.0F);
             GLManager.GL.Translate(0.0F, -1.0625F, 0.0F);
         }
 
-        if (updateCounter / 6 % 2 == 0)
+        if (_updateCounter / 6 % 2 == 0)
         {
-            entitySign.CurrentRow = editLine;
+            _entitySign.CurrentRow = _editLine;
         }
 
-        BlockEntityRenderer.Instance.RenderTileEntityAt(entitySign, -0.5D, -0.75D, -0.5D, 0.0F);
-        entitySign.CurrentRow = -1;
+        BlockEntityRenderer.Instance.RenderTileEntityAt(_entitySign, -0.5D, -0.75D, -0.5D, 0.0F);
+        _entitySign.CurrentRow = -1;
         GLManager.GL.PopMatrix();
-        base.render(mouseX, mouseY, partialTicks);
+
+        base.Render(mouseX, mouseY, partialTicks);
     }
 }

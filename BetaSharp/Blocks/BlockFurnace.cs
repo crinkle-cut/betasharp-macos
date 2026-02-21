@@ -10,17 +10,17 @@ namespace BetaSharp.Blocks;
 public class BlockFurnace : BlockWithEntity
 {
 
-    private java.util.Random random = new();
-    private readonly bool lit;
-    private static bool ignoreBlockRemoval = false;
+    private readonly JavaRandom _random = new();
+    private readonly bool _lit;
+    private static readonly ThreadLocal<bool> s_ignoreBlockRemoval = new(() => false);
 
     public BlockFurnace(int id, bool lit) : base(id, Material.Stone)
     {
-        this.lit = lit;
+        _lit = lit;
         textureId = 45;
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
         return Block.Furnace.id;
     }
@@ -77,20 +77,20 @@ public class BlockFurnace : BlockWithEntity
         else
         {
             int meta = blockView.getBlockMeta(x, y, z);
-            return side != meta ? textureId : (lit ? textureId + 16 : textureId - 1);
+            return side != meta ? textureId : (_lit ? textureId + 16 : textureId - 1);
         }
     }
 
-    public override void randomDisplayTick(World world, int x, int y, int z, java.util.Random random)
+    public override void randomDisplayTick(World world, int x, int y, int z, JavaRandom random)
     {
-        if (lit)
+        if (_lit)
         {
             int var6 = world.getBlockMeta(x, y, z);
             float particleX = (float)x + 0.5F;
-            float particleY = (float)y + 0.0F + random.nextFloat() * 6.0F / 16.0F;
+            float particleY = (float)y + 0.0F + random.NextFloat() * 6.0F / 16.0F;
             float particleZ = (float)z + 0.5F;
             float flameOffset = 0.52F;
-            float randomOffset = random.nextFloat() * 0.6F - 0.3F;
+            float randomOffset = random.NextFloat() * 0.6F - 0.3F;
             if (var6 == 4)
             {
                 world.addParticle("smoke", (double)(particleX - flameOffset), (double)particleY, (double)(particleZ + randomOffset), 0.0D, 0.0D, 0.0D);
@@ -138,7 +138,7 @@ public class BlockFurnace : BlockWithEntity
     {
         int meta = world.getBlockMeta(x, y, z);
         BlockEntity furnace = world.getBlockEntity(x, y, z);
-        ignoreBlockRemoval = true;
+        s_ignoreBlockRemoval.Value = true;
         if (lit)
         {
             world.setBlock(x, y, z, Block.LitFurnace.id);
@@ -148,7 +148,7 @@ public class BlockFurnace : BlockWithEntity
             world.setBlock(x, y, z, Block.Furnace.id);
         }
 
-        ignoreBlockRemoval = false;
+        s_ignoreBlockRemoval.Value = false;
         world.setBlockMeta(x, y, z, meta);
         furnace.cancelRemoval();
         world.setBlockEntity(x, y, z, furnace);
@@ -161,7 +161,7 @@ public class BlockFurnace : BlockWithEntity
 
     public override void onPlaced(World world, int x, int y, int z, EntityLiving placer)
     {
-        int direction = MathHelper.floor_double((double)(placer.yaw * 4.0F / 360.0F) + 0.5D) & 3;
+        int direction = MathHelper.Floor((double)(placer.yaw * 4.0F / 360.0F) + 0.5D) & 3;
         if (direction == 0)
         {
             world.setBlockMeta(x, y, z, 2);
@@ -186,7 +186,7 @@ public class BlockFurnace : BlockWithEntity
 
     public override void onBreak(World world, int x, int y, int z)
     {
-        if (!ignoreBlockRemoval)
+        if (!s_ignoreBlockRemoval.Value)
         {
             BlockEntityFurnace furnace = (BlockEntityFurnace)world.getBlockEntity(x, y, z);
 
@@ -195,13 +195,13 @@ public class BlockFurnace : BlockWithEntity
                 ItemStack stack = furnace.getStack(slotIndex);
                 if (stack != null)
                 {
-                    float offsetX = random.nextFloat() * 0.8F + 0.1F;
-                    float offsetY = random.nextFloat() * 0.8F + 0.1F;
-                    float offsetZ = random.nextFloat() * 0.8F + 0.1F;
+                    float offsetX = _random.NextFloat() * 0.8F + 0.1F;
+                    float offsetY = _random.NextFloat() * 0.8F + 0.1F;
+                    float offsetZ = _random.NextFloat() * 0.8F + 0.1F;
 
                     while (stack.count > 0)
                     {
-                        int var11 = random.nextInt(21) + 10;
+                        int var11 = _random.NextInt(21) + 10;
                         if (var11 > stack.count)
                         {
                             var11 = stack.count;
@@ -210,9 +210,9 @@ public class BlockFurnace : BlockWithEntity
                         stack.count -= var11;
                         EntityItem droppedItem = new EntityItem(world, (double)((float)x + offsetX), (double)((float)y + offsetY), (double)((float)z + offsetZ), new ItemStack(stack.itemId, var11, stack.getDamage()));
                         float var13 = 0.05F;
-                        droppedItem.velocityX = (double)((float)random.nextGaussian() * var13);
-                        droppedItem.velocityY = (double)((float)random.nextGaussian() * var13 + 0.2F);
-                        droppedItem.velocityZ = (double)((float)random.nextGaussian() * var13);
+                        droppedItem.velocityX = (double)((float)_random.NextGaussian() * var13);
+                        droppedItem.velocityY = (double)((float)_random.NextGaussian() * var13 + 0.2F);
+                        droppedItem.velocityZ = (double)((float)_random.NextGaussian() * var13);
                         world.SpawnEntity(droppedItem);
                     }
                 }

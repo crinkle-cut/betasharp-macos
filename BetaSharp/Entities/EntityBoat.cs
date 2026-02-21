@@ -98,7 +98,7 @@ public class EntityBoat : Entity
 
                 for (i = 0; i < 2; ++i)
                 {
-                    dropItem(Item.STICK.id, 1, 0.0F);
+                    dropItem(Item.Stick.id, 1, 0.0F);
                 }
 
                 markDead();
@@ -280,11 +280,11 @@ public class EntityBoat : Entity
 
                 for (int var12 = 0; (double)var12 < 1.0D + var6 * 60.0D; ++var12)
                 {
-                    double randomOffset = (double)(random.nextFloat() * 2.0F - 1.0F);
-                    double sideOffset = (double)(random.nextInt(2) * 2 - 1) * 0.7D;
+                    double randomOffset = (double)(random.NextFloat() * 2.0F - 1.0F);
+                    double sideOffset = (double)(random.NextInt(2) * 2 - 1) * 0.7D;
                     double particleX;
                     double particleZ;
-                    if (random.nextBoolean())
+                    if (random.NextBoolean())
                     {
                         particleX = x - var8 * randomOffset * 0.8D + var10 * sideOffset;
                         particleZ = z - var10 * randomOffset * 0.8D - var8 * sideOffset;
@@ -313,7 +313,7 @@ public class EntityBoat : Entity
 
                     for (j = 0; j < 2; ++j)
                     {
-                        dropItem(Item.STICK.id, 1, 0.0F);
+                        dropItem(Item.Stick.id, 1, 0.0F);
                     }
                 }
             }
@@ -371,9 +371,9 @@ public class EntityBoat : Entity
 
             for (i = 0; i < 4; ++i)
             {
-                int x = MathHelper.floor_double(base.x + ((double)(i % 2) - 0.5D) * 0.8D);
-                int y = MathHelper.floor_double(base.y);
-                int z = MathHelper.floor_double(base.z + ((double)(i / 2) - 0.5D) * 0.8D);
+                int x = MathHelper.Floor(base.x + ((double)(i % 2) - 0.5D) * 0.8D);
+                int y = MathHelper.Floor(base.y);
+                int z = MathHelper.Floor(base.z + ((double)(i / 2) - 0.5D) * 0.8D);
                 if (world.getBlockId(x, y, z) == Block.Snow.id)
                 {
                     world.setBlock(x, y, z, 0);

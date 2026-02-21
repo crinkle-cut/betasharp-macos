@@ -95,9 +95,9 @@ public class BlockSign : BlockWithEntity
         }
     }
 
-    public override int getDroppedItemId(int blockMeta, java.util.Random random)
+    public override int getDroppedItemId(int blockMeta, JavaRandom random)
     {
-        return Item.SIGN.id;
+        return Item.Sign.id;
     }
 
     public override void neighborUpdate(World world, int x, int y, int z, int id)

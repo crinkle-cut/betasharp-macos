@@ -431,15 +431,15 @@ public class Chunk : java.lang.Object
     public virtual void addEntity(Entity entity)
     {
         lastSaveHadEntities = true;
-        int var2 = MathHelper.floor_double(entity.x / 16.0D);
-        int var3 = MathHelper.floor_double(entity.z / 16.0D);
+        int var2 = MathHelper.Floor(entity.x / 16.0D);
+        int var3 = MathHelper.Floor(entity.z / 16.0D);
         if (var2 != x || var3 != z)
         {
-            java.lang.System.@out.println("Wrong location! " + entity);
+            Log.Info($"Wrong location! {entity}");
             java.lang.Thread.dumpStack();
         }
 
-        int var4 = MathHelper.floor_double(entity.y / 16.0D);
+        int var4 = MathHelper.Floor(entity.y / 16.0D);
         if (var4 < 0)
         {
             var4 = 0;
@@ -537,7 +537,7 @@ public class Chunk : java.lang.Object
         }
         else
         {
-            java.lang.System.@out.println("Attempted to place a tile entity where there was no entity tile!");
+            Log.Info("Attempted to place a tile entity where there was no entity tile!");
         }
     }
 
@@ -591,8 +591,8 @@ public class Chunk : java.lang.Object
 
     public virtual void collectOtherEntities(Entity except, Box box, List<Entity> result)
     {
-        int var4 = MathHelper.floor_double((box.minY - 2.0D) / 16.0D);
-        int var5 = MathHelper.floor_double((box.maxY + 2.0D) / 16.0D);
+        int var4 = MathHelper.Floor((box.minY - 2.0D) / 16.0D);
+        int var5 = MathHelper.Floor((box.maxY + 2.0D) / 16.0D);
         if (var4 < 0)
         {
             var4 = 0;
@@ -621,8 +621,8 @@ public class Chunk : java.lang.Object
 
     public virtual void collectEntitiesByClass(java.lang.Class entityClass, Box box, List<Entity> result)
     {
-        int var4 = MathHelper.floor_double((box.minY - 2.0D) / 16.0D);
-        int var5 = MathHelper.floor_double((box.maxY + 2.0D) / 16.0D);
+        int var4 = MathHelper.Floor((box.minY - 2.0D) / 16.0D);
+        int var5 = MathHelper.Floor((box.maxY + 2.0D) / 16.0D);
         if (var4 < 0)
         {
             var4 = 0;
@@ -831,9 +831,9 @@ public class Chunk : java.lang.Object
         }
     }
 
-    public virtual java.util.Random getSlimeRandom(long scrambler)
+    public virtual JavaRandom getSlimeRandom(long scrambler)
     {
-        return new java.util.Random(world.getSeed() + x * x * 4987142 + x * 5947611 + z * z * 4392871L + z * 389711 ^ scrambler);
+        return new JavaRandom(world.getSeed() + x * x * 4987142 + x * 5947611 + z * z * 4392871L + z * 389711 ^ scrambler);
     }
 
     public virtual bool isEmpty()

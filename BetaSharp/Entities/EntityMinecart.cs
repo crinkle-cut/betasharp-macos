@@ -80,7 +80,7 @@ public class EntityMinecart : Entity, IInventory
         return true;
     }
 
-    public EntityMinecart(World world, double x, double y, double z, int type) : base(world)
+    public EntityMinecart(World world, double x, double y, double z, int type) : this(world)
     {
         setPosition(x, y + (double)standingEyeHeight, z);
         velocityX = 0.0D;
@@ -113,7 +113,7 @@ public class EntityMinecart : Entity, IInventory
                 }
 
                 markDead();
-                dropItem(Item.MINECART.id, 1, 0.0F);
+                dropItem(Item.Minecart.id, 1, 0.0F);
                 if (type == 1)
                 {
                     EntityMinecart minecart = this;
@@ -123,13 +123,13 @@ public class EntityMinecart : Entity, IInventory
                         ItemStack itemStack = minecart.getStack(slotIndex);
                         if (itemStack != null)
                         {
-                            float offsetX = random.nextFloat() * 0.8F + 0.1F;
-                            float offsetY = random.nextFloat() * 0.8F + 0.1F;
-                            float offsetZ = random.nextFloat() * 0.8F + 0.1F;
+                            float offsetX = random.NextFloat() * 0.8F + 0.1F;
+                            float offsetY = random.NextFloat() * 0.8F + 0.1F;
+                            float offsetZ = random.NextFloat() * 0.8F + 0.1F;
 
                             while (itemStack.count > 0)
                             {
-                                int dropCount = random.nextInt(21) + 10;
+                                int dropCount = random.NextInt(21) + 10;
                                 if (dropCount > itemStack.count)
                                 {
                                     dropCount = itemStack.count;
@@ -138,9 +138,9 @@ public class EntityMinecart : Entity, IInventory
                                 itemStack.count -= dropCount;
                                 EntityItem entityItem = new EntityItem(world, x + (double)offsetX, y + (double)offsetY, z + (double)offsetZ, new ItemStack(itemStack.itemId, dropCount, itemStack.getDamage()));
                                 float scatterSpeed = 0.05F;
-                                entityItem.velocityX = (double)((float)random.nextGaussian() * scatterSpeed);
-                                entityItem.velocityY = (double)((float)random.nextGaussian() * scatterSpeed + 0.2F);
-                                entityItem.velocityZ = (double)((float)random.nextGaussian() * scatterSpeed);
+                                entityItem.velocityX = (double)((float)random.NextGaussian() * scatterSpeed);
+                                entityItem.velocityY = (double)((float)random.NextGaussian() * scatterSpeed + 0.2F);
+                                entityItem.velocityZ = (double)((float)random.NextGaussian() * scatterSpeed);
                                 world.SpawnEntity(entityItem);
                             }
                         }
@@ -164,7 +164,7 @@ public class EntityMinecart : Entity, IInventory
 
     public override void animateHurt()
     {
-        java.lang.System.@out.println("Animating hurt");
+        Log.Info("Animating hurt");
         minecartRockDirection = -minecartRockDirection;
         minecartTimeSinceHit = 10;
         minecartCurrentDamage += minecartCurrentDamage * 10;
@@ -182,13 +182,13 @@ public class EntityMinecart : Entity, IInventory
             ItemStack itemStack = getStack(slotIndex);
             if (itemStack != null)
             {
-                float offsetX = random.nextFloat() * 0.8F + 0.1F;
-                float offsetY = random.nextFloat() * 0.8F + 0.1F;
-                float offsetZ = random.nextFloat() * 0.8F + 0.1F;
+                float offsetX = random.NextFloat() * 0.8F + 0.1F;
+                float offsetY = random.NextFloat() * 0.8F + 0.1F;
+                float offsetZ = random.NextFloat() * 0.8F + 0.1F;
 
                 while (itemStack.count > 0)
                 {
-                    int dropCount = random.nextInt(21) + 10;
+                    int dropCount = random.NextInt(21) + 10;
                     if (dropCount > itemStack.count)
                     {
                         dropCount = itemStack.count;
@@ -197,9 +197,9 @@ public class EntityMinecart : Entity, IInventory
                     itemStack.count -= dropCount;
                     EntityItem entityItem = new EntityItem(world, x + (double)offsetX, y + (double)offsetY, z + (double)offsetZ, new ItemStack(itemStack.itemId, dropCount, itemStack.getDamage()));
                     float scatterSpeed = 0.05F;
-                    entityItem.velocityX = (double)((float)random.nextGaussian() * scatterSpeed);
-                    entityItem.velocityY = (double)((float)random.nextGaussian() * scatterSpeed + 0.2F);
-                    entityItem.velocityZ = (double)((float)random.nextGaussian() * scatterSpeed);
+                    entityItem.velocityX = (double)((float)random.NextGaussian() * scatterSpeed);
+                    entityItem.velocityY = (double)((float)random.NextGaussian() * scatterSpeed + 0.2F);
+                    entityItem.velocityZ = (double)((float)random.NextGaussian() * scatterSpeed);
                     world.SpawnEntity(entityItem);
                 }
             }
@@ -257,9 +257,9 @@ public class EntityMinecart : Entity, IInventory
             prevY = y;
             prevZ = z;
             velocityY -= (double)0.04F;
-            int floorX = MathHelper.floor_double(x);
-            int floorY = MathHelper.floor_double(y);
-            int floorZ = MathHelper.floor_double(z);
+            int floorX = MathHelper.Floor(x);
+            int floorY = MathHelper.Floor(y);
+            int floorZ = MathHelper.Floor(z);
             if (BlockRail.isRail(world, floorX, floorY - 1, floorZ))
             {
                 --floorY;
@@ -404,11 +404,11 @@ public class EntityMinecart : Entity, IInventory
                 }
 
                 move(var35, 0.0D, var37);
-                if (var14[0][1] != 0 && MathHelper.floor_double(x) - floorX == var14[0][0] && MathHelper.floor_double(z) - floorZ == var14[0][2])
+                if (var14[0][1] != 0 && MathHelper.Floor(x) - floorX == var14[0][0] && MathHelper.Floor(z) - floorZ == var14[0][2])
                 {
                     setPosition(x, y + (double)var14[0][1], z);
                 }
-                else if (var14[1][1] != 0 && MathHelper.floor_double(x) - floorX == var14[1][0] && MathHelper.floor_double(z) - floorZ == var14[1][2])
+                else if (var14[1][1] != 0 && MathHelper.Floor(x) - floorX == var14[1][0] && MathHelper.Floor(z) - floorZ == var14[1][2])
                 {
                     setPosition(x, y + (double)var14[1][1], z);
                 }
@@ -423,7 +423,7 @@ public class EntityMinecart : Entity, IInventory
                 {
                     if (type == 2)
                     {
-                        var39 = (double)MathHelper.sqrt_double(pushX * pushX + pushZ * pushZ);
+                        var39 = (double)MathHelper.Sqrt(pushX * pushX + pushZ * pushZ);
                         if (var39 > 0.01D)
                         {
                             var6 = true;
@@ -463,8 +463,8 @@ public class EntityMinecart : Entity, IInventory
                     setPosition(x, var52.Value.y, z);
                 }
 
-                int var53 = MathHelper.floor_double(x);
-                int var54 = MathHelper.floor_double(z);
+                int var53 = MathHelper.Floor(x);
+                int var54 = MathHelper.Floor(z);
                 if (var53 != floorX || var54 != floorZ)
                 {
                     var23 = System.Math.Sqrt(velocityX * velocityX + velocityZ * velocityZ);
@@ -475,7 +475,7 @@ public class EntityMinecart : Entity, IInventory
                 double var42;
                 if (type == 2)
                 {
-                    var42 = (double)MathHelper.sqrt_double(pushX * pushX + pushZ * pushZ);
+                    var42 = (double)MathHelper.Sqrt(pushX * pushX + pushZ * pushZ);
                     if (var42 > 0.01D && velocityX * velocityX + velocityZ * velocityZ > 0.001D)
                     {
                         pushX /= var42;
@@ -611,7 +611,7 @@ public class EntityMinecart : Entity, IInventory
                 passenger = null;
             }
 
-            if (var6 && random.nextInt(4) == 0)
+            if (var6 && random.NextInt(4) == 0)
             {
                 --fuel;
                 if (fuel < 0)
@@ -627,9 +627,9 @@ public class EntityMinecart : Entity, IInventory
 
     public Vec3D? func_515_a(double x, double y, double z, double var7)
     {
-        int var9 = MathHelper.floor_double(x);
-        int var10 = MathHelper.floor_double(y);
-        int var11 = MathHelper.floor_double(z);
+        int var9 = MathHelper.Floor(x);
+        int var10 = MathHelper.Floor(y);
+        int var11 = MathHelper.Floor(z);
         if (BlockRail.isRail(world, var9, var10 - 1, var11))
         {
             --var10;
@@ -662,11 +662,11 @@ public class EntityMinecart : Entity, IInventory
             var17 /= var19;
             x += var15 * var7;
             z += var17 * var7;
-            if (var14[0][1] != 0 && MathHelper.floor_double(x) - var9 == var14[0][0] && MathHelper.floor_double(z) - var11 == var14[0][2])
+            if (var14[0][1] != 0 && MathHelper.Floor(x) - var9 == var14[0][0] && MathHelper.Floor(z) - var11 == var14[0][2])
             {
                 y += (double)var14[0][1];
             }
-            else if (var14[1][1] != 0 && MathHelper.floor_double(x) - var9 == var14[1][0] && MathHelper.floor_double(z) - var11 == var14[1][2])
+            else if (var14[1][1] != 0 && MathHelper.Floor(x) - var9 == var14[1][0] && MathHelper.Floor(z) - var11 == var14[1][2])
             {
                 y += (double)var14[1][1];
             }
@@ -674,12 +674,12 @@ public class EntityMinecart : Entity, IInventory
             return func_514_g(x, y, z);
         }
     }
-        
+
     public Vec3D? func_514_g(double x, double y, double z)
     {
-        int floorX = MathHelper.floor_double(x);
-        int floorY = MathHelper.floor_double(y);
-        int floorZ = MathHelper.floor_double(z);
+        int floorX = MathHelper.Floor(x);
+        int floorY = MathHelper.Floor(y);
+        int floorZ = MathHelper.Floor(z);
         if (BlockRail.isRail(world, floorX, floorY - 1, floorZ))
         {
             --floorY;
@@ -741,7 +741,7 @@ public class EntityMinecart : Entity, IInventory
             {
                 y += 0.5D;
             }
-                
+
             return new Vec3D(x, y, z);
         }
         else
@@ -817,7 +817,7 @@ public class EntityMinecart : Entity, IInventory
         {
             if (entity != passenger)
             {
-                if (entity is EntityLiving && !(entity is EntityPlayer) && type == 0 && velocityX * velocityX + velocityZ * velocityZ > 0.01D && passenger == null && entity.vehicle == null)
+                if (entity is EntityLiving && entity is not EntityPlayer && type == 0 && velocityX * velocityX + velocityZ * velocityZ > 0.01D && passenger == null && entity.vehicle == null)
                 {
                     entity.setVehicle(this);
                 }
@@ -827,7 +827,7 @@ public class EntityMinecart : Entity, IInventory
                 double var6 = var2 * var2 + var4 * var4;
                 if (var6 >= (double)1.0E-4F)
                 {
-                    var6 = (double)MathHelper.sqrt_double(var6);
+                    var6 = (double)MathHelper.Sqrt(var6);
                     var2 /= var6;
                     var4 /= var6;
                     double var8 = 1.0D / var6;
@@ -982,7 +982,7 @@ public class EntityMinecart : Entity, IInventory
         else if (type == 2)
         {
             ItemStack heldItem = player.inventory.getSelectedItem();
-            if (heldItem != null && heldItem.itemId == Item.COAL.id)
+            if (heldItem != null && heldItem.itemId == Item.Coal.id)
             {
                 if (--heldItem.count == 0)
                 {

@@ -1,12 +1,19 @@
 using BetaSharp.Blocks.Materials;
 using BetaSharp.Entities;
 using BetaSharp.Worlds;
+using BetaSharp.Util.Maths;
 
 namespace BetaSharp.Blocks;
 
 public class BlockSand : Block
 {
-    public static bool fallInstantly = false;
+    private static readonly ThreadLocal<bool> s_fallInstantly = new(() => false);
+
+    public static bool fallInstantly
+    {
+        get => s_fallInstantly.Value;
+        set => s_fallInstantly.Value = value;
+    }
 
     public BlockSand(int id, int textureId) : base(id, textureId, Material.Sand)
     {
@@ -22,7 +29,7 @@ public class BlockSand : Block
         world.ScheduleBlockUpdate(x, y, z, base.id, getTickRate());
     }
 
-    public override void onTick(World world, int x, int y, int z, java.util.Random random)
+    public override void onTick(World world, int x, int y, int z, JavaRandom random)
     {
         processFall(world, x, y, z);
     }
@@ -74,7 +81,7 @@ public class BlockSand : Block
         else
         {
             Material material = Block.Blocks[blockId].material;
-            return material == Material.Water ? true : material == Material.Lava;
+            return material == Material.Water || material == Material.Lava;
         }
     }
 }

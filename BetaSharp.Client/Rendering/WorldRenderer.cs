@@ -5,7 +5,8 @@ using BetaSharp.Client.Rendering.Blocks;
 using BetaSharp.Client.Rendering.Blocks.Entities;
 using BetaSharp.Client.Rendering.Chunks;
 using BetaSharp.Client.Rendering.Core;
-using BetaSharp.Client.Rendering.Entitys;
+using BetaSharp.Client.Rendering.Entities;
+using BetaSharp.Client.Options;
 using BetaSharp.Entities;
 using BetaSharp.Items;
 using BetaSharp.Profiling;
@@ -23,7 +24,7 @@ public class WorldRenderer : IWorldAccess
     private readonly TextureManager renderEngine;
     private readonly Minecraft mc;
     private BlockRenderer globalRenderBlocks;
-    private int cloudOffsetX = 0;
+    private int cloudOffsetX;
     private readonly int starGLCallList;
     private readonly int glSkyList;
     private readonly int glSkyList2;
@@ -233,9 +234,9 @@ public class WorldRenderer : IWorldAccess
             for (var6 = 0; var6 < var5.Count; ++var6)
             {
                 var7 = var5[var6];
-                if (var7.shouldRender(var1) && (var7.ignoreFrustumCheck || culler.isBoundingBoxInFrustum(var7.boundingBox)) && (var7 != mc.camera || mc.options.thirdPersonView || mc.camera.isSleeping()))
+                if (var7.shouldRender(var1) && (var7.ignoreFrustumCheck || culler.isBoundingBoxInFrustum(var7.boundingBox)) && (var7 != mc.camera || mc.options.CameraMode != EnumCameraMode.FirstPerson || mc.camera.isSleeping()))
                 {
-                    int var8 = MathHelper.floor_double(var7.y);
+                    int var8 = MathHelper.Floor(var7.y);
                     if (var8 < 0)
                     {
                         var8 = 0;
@@ -246,7 +247,7 @@ public class WorldRenderer : IWorldAccess
                         var8 = 127;
                     }
 
-                    if (world.isPosLoaded(MathHelper.floor_double(var7.x), var8, MathHelper.floor_double(var7.z)))
+                    if (world.isPosLoaded(MathHelper.Floor(var7.x), var8, MathHelper.Floor(var7.z)))
                     {
                         ++countEntitiesRendered;
                         EntityRenderDispatcher.instance.renderEntity(var7, var3);
@@ -285,7 +286,7 @@ public class WorldRenderer : IWorldAccess
 
         if (pass == 0)
         {
-            chunkRenderer.Render(cam, new(var33, var7, var9), renderDistance, world.getTime(), (float)var3, mc.options.environmentAnimation);
+            chunkRenderer.Render(cam, new(var33, var7, var9), renderDistance, world.getTime(), (float)var3, mc.options.EnvironmentAnimation);
         }
         else
         {
@@ -350,8 +351,8 @@ public class WorldRenderer : IWorldAccess
                 for (int var20 = 0; var20 <= var19; ++var20)
                 {
                     var14 = var20 * (float)java.lang.Math.PI * 2.0F / var19;
-                    float var15 = MathHelper.sin(var14);
-                    float var16 = MathHelper.cos(var14);
+                    float var15 = MathHelper.Sin(var14);
+                    float var16 = MathHelper.Cos(var14);
                     var17.addVertex((double)(var15 * 120.0F), (double)(var16 * 120.0F), (double)(-var16 * 40.0F * var18[3]));
                 }
 
@@ -372,7 +373,7 @@ public class WorldRenderer : IWorldAccess
             GLManager.GL.Rotate(0.0F, 0.0F, 0.0F, 1.0F);
             GLManager.GL.Rotate(world.getTime(var1) * 360.0F, 1.0F, 0.0F, 0.0F);
             var11 = 30.0F;
-            GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.getTextureId("/terrain/sun.png"));
+            GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.GetTextureId("/terrain/sun.png"));
             var17.startDrawingQuads();
             var17.addVertexWithUV((double)-var11, 100.0D, (double)-var11, 0.0D, 0.0D);
             var17.addVertexWithUV((double)var11, 100.0D, (double)-var11, 1.0D, 0.0D);
@@ -380,7 +381,7 @@ public class WorldRenderer : IWorldAccess
             var17.addVertexWithUV((double)-var11, 100.0D, (double)var11, 0.0D, 1.0D);
             var17.draw();
             var11 = 20.0F;
-            GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.getTextureId("/terrain/moon.png"));
+            GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.GetTextureId("/terrain/moon.png"));
             var17.startDrawingQuads();
             var17.addVertexWithUV((double)-var11, -100.0D, (double)var11, 1.0D, 1.0D);
             var17.addVertexWithUV((double)var11, -100.0D, (double)var11, 0.0D, 1.0D);
@@ -535,11 +536,11 @@ public class WorldRenderer : IWorldAccess
         double var6 = (mc.camera.prevX + (mc.camera.x - mc.camera.prevX) * (double)var1 + (double)((cloudOffsetX + var1) * 0.03F)) / (double)var4;
         double var8 = (mc.camera.prevZ + (mc.camera.z - mc.camera.prevZ) * (double)var1) / (double)var4 + (double)0.33F;
         float var10 = world.dimension.getCloudHeight() - var2 + 0.33F;
-        int var11 = MathHelper.floor_double(var6 / 2048.0D);
-        int var12 = MathHelper.floor_double(var8 / 2048.0D);
+        int var11 = MathHelper.Floor(var6 / 2048.0D);
+        int var12 = MathHelper.Floor(var8 / 2048.0D);
         var6 -= var11 * 2048;
         var8 -= var12 * 2048;
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.getTextureId("/environment/clouds.png"));
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)renderEngine.GetTextureId("/environment/clouds.png"));
         GLManager.GL.Enable(GLEnum.Blend);
         GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
         Vector3D<double> var13 = world.getCloudColor(var1);
@@ -547,11 +548,11 @@ public class WorldRenderer : IWorldAccess
         float var15 = (float)var13.Y;
         float var16 = (float)var13.Z;
 
-        float var19 = 0.00390625F;
-        float var17 = MathHelper.floor_double(var6) * var19;
-        float var18 = MathHelper.floor_double(var8) * var19;
-        float var20 = (float)(var6 - MathHelper.floor_double(var6));
-        float var21 = (float)(var8 - MathHelper.floor_double(var8));
+        float var19 = 1 / 256f;
+        float var17 = MathHelper.Floor(var6) * var19;
+        float var18 = MathHelper.Floor(var8) * var19;
+        float var20 = (float)(var6 - MathHelper.Floor(var6));
+        float var21 = (float)(var8 - MathHelper.Floor(var8));
 
         GLManager.GL.Scale(var4, 1.0F, var4);
 
@@ -610,18 +611,18 @@ public class WorldRenderer : IWorldAccess
         GLManager.GL.Enable(GLEnum.Blend);
         GLManager.GL.Enable(GLEnum.AlphaTest);
         GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.One);
-        GLManager.GL.Color4(1.0F, 1.0F, 1.0F, (MathHelper.sin(java.lang.System.currentTimeMillis() / 100.0F) * 0.2F + 0.4F) * 0.5F);
+        GLManager.GL.Color4(1.0F, 1.0F, 1.0F, (MathHelper.Sin(java.lang.System.currentTimeMillis() / 100.0F) * 0.2F + 0.4F) * 0.5F);
         int var8;
         if (var3 == 0)
         {
             if (damagePartialTime > 0.0F)
             {
                 GLManager.GL.BlendFunc(GLEnum.DstColor, GLEnum.SrcColor);
-                int var7 = renderEngine.getTextureId("/terrain.png");
+                int var7 = renderEngine.GetTextureId("/terrain.png");
                 GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)var7);
                 GLManager.GL.Color4(1.0F, 1.0F, 1.0F, 0.5F);
                 GLManager.GL.PushMatrix();
-                var8 = world.getBlockId(var2.blockX, var2.blockY, var2.blockZ);
+                var8 = world.getBlockId(var2.BlockX, var2.BlockY, var2.BlockZ);
                 Block var9 = var8 > 0 ? Block.Blocks[var8] : null;
                 GLManager.GL.Disable(GLEnum.AlphaTest);
                 GLManager.GL.PolygonOffset(-3.0F, -3.0F);
@@ -635,7 +636,7 @@ public class WorldRenderer : IWorldAccess
                 var6.startDrawingQuads();
                 var6.setTranslationD(-var10, -var12, -var14);
                 var6.disableColor();
-                globalRenderBlocks.renderBlockUsingTexture(var9, var2.blockX, var2.blockY, var2.blockZ, 240 + (int)(damagePartialTime * 10.0F));
+                globalRenderBlocks.renderBlockUsingTexture(var9, var2.BlockX, var2.BlockY, var2.BlockZ, 240 + (int)(damagePartialTime * 10.0F));
                 var6.draw();
                 var6.setTranslationD(0.0D, 0.0D, 0.0D);
                 GLManager.GL.Disable(GLEnum.AlphaTest);
@@ -649,39 +650,39 @@ public class WorldRenderer : IWorldAccess
         else if (var4 != null)
         {
             GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
-            float var16 = MathHelper.sin(java.lang.System.currentTimeMillis() / 100.0F) * 0.2F + 0.8F;
-            GLManager.GL.Color4(var16, var16, var16, MathHelper.sin(java.lang.System.currentTimeMillis() / 200.0F) * 0.2F + 0.5F);
-            var8 = renderEngine.getTextureId("/terrain.png");
+            float var16 = MathHelper.Sin(java.lang.System.currentTimeMillis() / 100.0F) * 0.2F + 0.8F;
+            GLManager.GL.Color4(var16, var16, var16, MathHelper.Sin(java.lang.System.currentTimeMillis() / 200.0F) * 0.2F + 0.5F);
+            var8 = renderEngine.GetTextureId("/terrain.png");
             GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)var8);
-            int var17 = var2.blockX;
-            int var18 = var2.blockY;
-            int var11 = var2.blockZ;
-            if (var2.side == 0)
+            int var17 = var2.BlockX;
+            int var18 = var2.BlockY;
+            int var11 = var2.BlockZ;
+            if (var2.Side == 0)
             {
                 --var18;
             }
 
-            if (var2.side == 1)
+            if (var2.Side == 1)
             {
                 ++var18;
             }
 
-            if (var2.side == 2)
+            if (var2.Side == 2)
             {
                 --var11;
             }
 
-            if (var2.side == 3)
+            if (var2.Side == 3)
             {
                 ++var11;
             }
 
-            if (var2.side == 4)
+            if (var2.Side == 4)
             {
                 --var17;
             }
 
-            if (var2.side == 5)
+            if (var2.Side == 5)
             {
                 ++var17;
             }
@@ -693,7 +694,7 @@ public class WorldRenderer : IWorldAccess
 
     public void drawSelectionBox(EntityPlayer var1, HitResult var2, int var3, ItemStack var4, float var5)
     {
-        if (var3 == 0 && var2.type == HitResultType.TILE)
+        if (var3 == 0 && var2.Type == HitResultType.TILE)
         {
             GLManager.GL.Enable(GLEnum.Blend);
             GLManager.GL.BlendFunc(GLEnum.SrcAlpha, GLEnum.OneMinusSrcAlpha);
@@ -702,14 +703,14 @@ public class WorldRenderer : IWorldAccess
             GLManager.GL.Disable(GLEnum.Texture2D);
             GLManager.GL.DepthMask(false);
             float var6 = 0.002F;
-            int var7 = world.getBlockId(var2.blockX, var2.blockY, var2.blockZ);
+            int var7 = world.getBlockId(var2.BlockX, var2.BlockY, var2.BlockZ);
             if (var7 > 0)
             {
-                Block.Blocks[var7].updateBoundingBox(world, var2.blockX, var2.blockY, var2.blockZ);
+                Block.Blocks[var7].updateBoundingBox(world, var2.BlockX, var2.BlockY, var2.BlockZ);
                 double var8 = var1.lastTickX + (var1.x - var1.lastTickX) * (double)var5;
                 double var10 = var1.lastTickY + (var1.y - var1.lastTickY) * (double)var5;
                 double var12 = var1.lastTickZ + (var1.z - var1.lastTickZ) * (double)var5;
-                drawOutlinedBoundingBox(Block.Blocks[var7].getBoundingBox(world, var2.blockX, var2.blockY, var2.blockZ).expand((double)var6, (double)var6, (double)var6).offset(-var8, -var10, -var12));
+                drawOutlinedBoundingBox(Block.Blocks[var7].getBoundingBox(world, var2.BlockX, var2.BlockY, var2.BlockZ).expand((double)var6, (double)var6, (double)var6).offset(-var8, -var10, -var12));
             }
 
             GLManager.GL.DepthMask(true);
@@ -750,12 +751,12 @@ public class WorldRenderer : IWorldAccess
 
     public void MarkBlocksDirty(int var1, int var2, int var3, int var4, int var5, int var6)
     {
-        int var7 = MathHelper.bucketInt(var1, SubChunkRenderer.Size);
-        int var8 = MathHelper.bucketInt(var2, SubChunkRenderer.Size);
-        int var9 = MathHelper.bucketInt(var3, SubChunkRenderer.Size);
-        int var10 = MathHelper.bucketInt(var4, SubChunkRenderer.Size);
-        int var11 = MathHelper.bucketInt(var5, SubChunkRenderer.Size);
-        int var12 = MathHelper.bucketInt(var6, SubChunkRenderer.Size);
+        int var7 = MathHelper.FloorDiv(var1, SubChunkRenderer.Size);
+        int var8 = MathHelper.FloorDiv(var2, SubChunkRenderer.Size);
+        int var9 = MathHelper.FloorDiv(var3, SubChunkRenderer.Size);
+        int var10 = MathHelper.FloorDiv(var4, SubChunkRenderer.Size);
+        int var11 = MathHelper.FloorDiv(var5, SubChunkRenderer.Size);
+        int var12 = MathHelper.FloorDiv(var6, SubChunkRenderer.Size);
 
         for (int var13 = var7; var13 <= var10; ++var13)
         {
@@ -786,7 +787,7 @@ public class WorldRenderer : IWorldAccess
             mc.ingameGUI.setRecordPlayingMessage("C418 - " + var1);
         }
 
-        mc.sndManager.playStreaming(var1, var2, var3, var4, 1.0F, 1.0F);
+        mc.sndManager.PlayStreaming(var1, var2, var3, var4, 1.0F, 1.0F);
     }
 
     public void playSound(string var1, double var2, double var4, double var6, float var8, float var9)
@@ -799,7 +800,7 @@ public class WorldRenderer : IWorldAccess
 
         if (mc.camera.getSquaredDistance(var2, var4, var6) < (double)(var10 * var10))
         {
-            mc.sndManager.playSound(var1, (float)var2, (float)var4, (float)var6, var8, var9);
+            mc.sndManager.PlaySound(var1, (float)var2, (float)var4, (float)var6, var8, var9);
         }
 
     }
@@ -860,7 +861,7 @@ public class WorldRenderer : IWorldAccess
                 }
                 else if (var1.Equals("snowballpoof"))
                 {
-                    mc.particleManager.addEffect(new EntitySlimeFX(world, var2, var4, var6, Item.SNOWBALL));
+                    mc.particleManager.addEffect(new EntitySlimeFX(world, var2, var4, var6, Item.Snowball));
                 }
                 else if (var1.Equals("snowshovel"))
                 {
@@ -868,7 +869,7 @@ public class WorldRenderer : IWorldAccess
                 }
                 else if (var1.Equals("slime"))
                 {
-                    mc.particleManager.addEffect(new EntitySlimeFX(world, var2, var4, var6, Item.SLIMEBALL));
+                    mc.particleManager.addEffect(new EntitySlimeFX(world, var2, var4, var6, Item.Slimeball));
                 }
                 else if (var1.Equals("heart"))
                 {
@@ -921,7 +922,7 @@ public class WorldRenderer : IWorldAccess
 
     public void worldEvent(EntityPlayer var1, int var2, int var3, int var4, int var5, int var6)
     {
-        java.util.Random var7 = world.random;
+        JavaRandom var7 = world.random;
         int var16;
         switch (var2)
         {
@@ -937,15 +938,15 @@ public class WorldRenderer : IWorldAccess
             case 1003:
                 if (java.lang.Math.random() < 0.5D)
                 {
-                    world.playSound(var3 + 0.5D, var4 + 0.5D, var5 + 0.5D, "random.door_open", 1.0F, world.random.nextFloat() * 0.1F + 0.9F);
+                    world.playSound(var3 + 0.5D, var4 + 0.5D, var5 + 0.5D, "random.door_open", 1.0F, world.random.NextFloat() * 0.1F + 0.9F);
                 }
                 else
                 {
-                    world.playSound(var3 + 0.5D, var4 + 0.5D, var5 + 0.5D, "random.door_close", 1.0F, world.random.nextFloat() * 0.1F + 0.9F);
+                    world.playSound(var3 + 0.5D, var4 + 0.5D, var5 + 0.5D, "random.door_close", 1.0F, world.random.NextFloat() * 0.1F + 0.9F);
                 }
                 break;
             case 1004:
-                world.playSound((double)(var3 + 0.5F), (double)(var4 + 0.5F), (double)(var5 + 0.5F), "random.fizz", 0.5F, 2.6F + (var7.nextFloat() - var7.nextFloat()) * 0.8F);
+                world.playSound((double)(var3 + 0.5F), (double)(var4 + 0.5F), (double)(var5 + 0.5F), "random.fizz", 0.5F, 2.6F + (var7.NextFloat() - var7.NextFloat()) * 0.8F);
                 break;
             case 1005:
                 if (Item.ITEMS[var6] is ItemRecord)
@@ -966,23 +967,23 @@ public class WorldRenderer : IWorldAccess
 
                 for (var16 = 0; var16 < 10; ++var16)
                 {
-                    double var31 = var7.nextDouble() * 0.2D + 0.01D;
-                    double var19 = var10 + var8 * 0.01D + (var7.nextDouble() - 0.5D) * var9 * 0.5D;
-                    double var21 = var12 + (var7.nextDouble() - 0.5D) * 0.5D;
-                    double var23 = var14 + var9 * 0.01D + (var7.nextDouble() - 0.5D) * var8 * 0.5D;
-                    double var25 = var8 * var31 + var7.nextGaussian() * 0.01D;
-                    double var27 = -0.03D + var7.nextGaussian() * 0.01D;
-                    double var29 = var9 * var31 + var7.nextGaussian() * 0.01D;
+                    double var31 = var7.NextDouble() * 0.2D + 0.01D;
+                    double var19 = var10 + var8 * 0.01D + (var7.NextDouble() - 0.5D) * var9 * 0.5D;
+                    double var21 = var12 + (var7.NextDouble() - 0.5D) * 0.5D;
+                    double var23 = var14 + var9 * 0.01D + (var7.NextDouble() - 0.5D) * var8 * 0.5D;
+                    double var25 = var8 * var31 + var7.NextGaussian() * 0.01D;
+                    double var27 = -0.03D + var7.NextGaussian() * 0.01D;
+                    double var29 = var9 * var31 + var7.NextGaussian() * 0.01D;
                     spawnParticle("smoke", var19, var21, var23, var25, var27, var29);
                 }
 
                 return;
-            case 2001:
+            case 2001: // This is for breaking a block
                 var16 = var6 & 255;
                 if (var16 > 0)
                 {
                     Block var17 = Block.Blocks[var16];
-                    mc.sndManager.playSound(var17.soundGroup.stepSoundDir(), var3 + 0.5F, var4 + 0.5F, var5 + 0.5F, (var17.soundGroup.getVolume() + 1.0F) / 2.0F, var17.soundGroup.getPitch() * 0.8F);
+                    mc.sndManager.PlaySound(var17.soundGroup.BreakSound, var3 + 0.5F, var4 + 0.5F, var5 + 0.5F, (var17.soundGroup.Volume + 1.0F) / 2.0F, var17.soundGroup.Pitch * 0.8F);
                 }
 
                 mc.particleManager.addBlockDestroyEffects(var3, var4, var5, var6 & 255, var6 >> 8 & 255);

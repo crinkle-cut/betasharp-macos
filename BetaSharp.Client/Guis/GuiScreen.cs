@@ -1,44 +1,48 @@
 using BetaSharp.Client.Input;
 using BetaSharp.Client.Rendering;
 using BetaSharp.Client.Rendering.Core;
+using java.awt;
+using java.awt.datatransfer;
 using java.util;
 using Silk.NET.OpenGL.Legacy;
+using System;
+using System.Collections.Generic;
 
 namespace BetaSharp.Client.Guis;
 
 public class GuiScreen : Gui
 {
-
     public Minecraft mc;
-    public int width;
-    public int height;
-    protected java.util.List controlList = new ArrayList();
-    public bool field_948_f = false;
-    public TextRenderer fontRenderer;
-    public GuiParticle particlesGui;
-    private GuiButton selectedButton = null;
+    public int Width;
+    public int Height;
+    protected List<GuiButton> _controlList = new();
+    public bool AllowUserInput = false;
+    public virtual bool PausesGame => true;
+    public TextRenderer FontRenderer;
+    public GuiParticle ParticlesGui;
+    private GuiButton SelectedButton = null;
+    protected bool _isSubscribedToKeyboard = false;
 
-    public virtual void render(int var1, int var2, float var3)
+    public virtual void Render(int mouseX, int mouseY, float partialTicks)
     {
-        for (int var4 = 0; var4 < controlList.size(); ++var4)
+        foreach (var control in _controlList)
         {
-            GuiButton var5 = (GuiButton)controlList.get(var4);
-            var5.drawButton(mc, var1, var2);
+            control.DrawButton(mc, mouseX, mouseY);
         }
-
     }
 
-    protected virtual void keyTyped(char eventChar, int eventKey)
+    protected virtual void KeyTyped(char eventChar, int eventKey)
     {
-        if (eventKey == 1)
+        if (eventKey == Keyboard.KEY_ESCAPE)
         {
             mc.displayGuiScreen(null);
             mc.setIngameFocus();
         }
-
     }
 
-    public static string getClipboardString()
+    protected virtual void CharTyped(char eventChar) { }
+
+    public static string GetClipboardString()
     {
         try
         {
@@ -52,159 +56,167 @@ public class GuiScreen : Gui
         }
         catch (Exception)
         {
+            Log.Error($"Failed to get clipboard string");
         }
-
         return "";
     }
 
-    protected virtual void mouseClicked(int var1, int var2, int var3)
+    public static void SetClipboardString(string text)
     {
-        if (var3 == 0)
+        try
         {
-            for (int var4 = 0; var4 < controlList.size(); ++var4)
+            unsafe
             {
-                GuiButton var5 = (GuiButton)controlList.get(var4);
-                if (var5.mousePressed(mc, var1, var2))
+                if (Display.isCreated())
                 {
-                    selectedButton = var5;
-                    mc.sndManager.playSoundFX("random.click", 1.0F, 1.0F);
-                    actionPerformed(var5);
+                    Display.getGlfw().SetClipboardString(Display.getWindowHandle(), text);
                 }
             }
         }
-
-    }
-
-    protected virtual void mouseMovedOrUp(int var1, int var2, int var3)
-    {
-        if (selectedButton != null && var3 == 0)
+        catch (Exception)
         {
-            selectedButton.mouseReleased(var1, var2);
-            selectedButton = null;
+            Log.Error($"Failed to set clipboard string: {text}");
         }
-
     }
 
-    protected virtual void actionPerformed(GuiButton var1)
+    protected virtual void MouseClicked(int mouseX, int mouseY, int button)
+    {
+        if (button == 0)
+        {
+            foreach (var control in _controlList.ToArray())
+            {
+                if (control.MousePressed(mc, mouseX, mouseY))
+                {
+                    SelectedButton = control;
+                    mc.sndManager.PlaySoundFX("random.click", 1.0F, 1.0F);
+                    ActionPerformed(control);
+                }
+            }
+        }
+    }
+
+    protected virtual void MouseMovedOrUp(int x, int y, int button)
+    {
+        if (SelectedButton != null && button == 0)
+        {
+            SelectedButton.MouseReleased(x, y);
+            SelectedButton = null;
+        }
+    }
+
+    protected virtual void ActionPerformed(GuiButton var1) { }
+
+    public void SetWorldAndResolution(Minecraft mc, int width, int height)
+    {
+        ParticlesGui = new GuiParticle(mc);
+        this.mc = mc;
+        FontRenderer = mc.fontRenderer;
+        Width = width;
+        Height = height;
+        _controlList.Clear();
+        InitGui();
+    }
+
+    public virtual void InitGui()
     {
     }
 
-    public void setWorldAndResolution(Minecraft var1, int var2, int var3)
-    {
-        particlesGui = new GuiParticle(var1);
-        mc = var1;
-        fontRenderer = var1.fontRenderer;
-        width = var2;
-        height = var3;
-        controlList.clear();
-        initGui();
-    }
-
-    public virtual void initGui()
-    {
-    }
-
-    public void handleInput()
+    public void HandleInput()
     {
         while (Mouse.next())
         {
-            handleMouseInput();
+            HandleMouseInput();
         }
 
-        while (Keyboard.next())
+        while (Keyboard.Next())
         {
-            handleKeyboardInput();
+            HandleKeyboardInput();
         }
-
     }
 
-    public void handleMouseInput()
+    public virtual void HandleMouseInput()
     {
-        int var1;
-        int var2;
+        int x = Mouse.getEventX() * Width / mc.displayWidth;
+        int y = Height - Mouse.getEventY() * Height / mc.displayHeight - 1;
         if (Mouse.getEventButtonState())
         {
-            var1 = Mouse.getEventX() * width / mc.displayWidth;
-            var2 = height - Mouse.getEventY() * height / mc.displayHeight - 1;
-            mouseClicked(var1, var2, Mouse.getEventButton());
+            MouseClicked(x, y, Mouse.getEventButton());
         }
         else
         {
-            var1 = Mouse.getEventX() * width / mc.displayWidth;
-            var2 = height - Mouse.getEventY() * height / mc.displayHeight - 1;
-            mouseMovedOrUp(var1, var2, Mouse.getEventButton());
+            MouseMovedOrUp(x, y, Mouse.getEventButton());
         }
-
     }
 
-    public void handleKeyboardInput()
+    public void HandleKeyboardInput()
     {
         if (Keyboard.getEventKeyState())
         {
-            if (Keyboard.getEventKey() == Keyboard.KEY_F11)
+            int key = Keyboard.getEventKey();
+            char c = Keyboard.getEventCharacter();
+
+            if (key == Keyboard.KEY_F11)
             {
                 mc.toggleFullscreen();
                 return;
             }
 
-            keyTyped(Keyboard.getEventCharacter(), Keyboard.getEventKey());
+            if (key != Keyboard.KEY_NONE)
+            {
+                KeyTyped(c, key);
+            }
         }
-
     }
 
-    public virtual void updateScreen()
+    public virtual void UpdateScreen() { }
+
+    public virtual void OnGuiClosed()
     {
+        if (_isSubscribedToKeyboard)
+        {
+            Keyboard.OnCharacterTyped -= CharTyped;
+            _isSubscribedToKeyboard = false;
+        }
     }
 
-    public virtual void onGuiClosed()
+    public void DrawDefaultBackground()
     {
+        DrawWorldBackground(0);
     }
 
-    public void drawDefaultBackground()
-    {
-        drawWorldBackground(0);
-    }
-
-    public void drawWorldBackground(int var1)
+    public void DrawWorldBackground(int var1)
     {
         if (mc.world != null)
         {
-            drawGradientRect(0, 0, width, height, 0xC0101010, 0xD0101010);
+            DrawGradientRect(0, 0, Width, Height, 0xC0101010, 0xD0101010);
         }
         else
         {
-            drawBackground(var1);
+            DrawBackground(var1);
         }
-
     }
 
-    public void drawBackground(int var1)
+    public void DrawBackground(int var1)
     {
         GLManager.GL.Disable(EnableCap.Lighting);
         GLManager.GL.Disable(EnableCap.Fog);
-        Tessellator var2 = Tessellator.instance;
-        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.getTextureId("/gui/background.png"));
+
+        Tessellator tess = Tessellator.instance;
+        GLManager.GL.BindTexture(GLEnum.Texture2D, (uint)mc.textureManager.GetTextureId("/gui/background.png"));
         GLManager.GL.Color4(1.0F, 1.0F, 1.0F, 1.0F);
-        float var3 = 32.0F;
-        var2.startDrawingQuads();
-        var2.setColorOpaque_I(4210752);
-        var2.addVertexWithUV(0.0D, height, 0.0D, 0.0D, (double)(height / var3 + var1));
-        var2.addVertexWithUV(width, height, 0.0D, (double)(width / var3), (double)(height / var3 + var1));
-        var2.addVertexWithUV(width, 0.0D, 0.0D, (double)(width / var3), 0 + var1);
-        var2.addVertexWithUV(0.0D, 0.0D, 0.0D, 0.0D, 0 + var1);
-        var2.draw();
+
+        float scale = 32.0F;
+        tess.startDrawingQuads();
+        tess.setColorOpaque_I(0x404040);
+
+        tess.addVertexWithUV(0.0D, Height, 0.0D, 0.0D, (double)(Height / scale + var1));
+        tess.addVertexWithUV(Width, Height, 0.0D, (double)(Width / scale), (double)(Height / scale + var1));
+        tess.addVertexWithUV(Width, 0.0D, 0.0D, (double)(Width / scale), 0 + var1);
+        tess.addVertexWithUV(0.0D, 0.0D, 0.0D, 0.0D, 0 + var1);
+        tess.draw();
     }
 
-    public virtual bool doesGuiPauseGame()
-    {
-        return true;
-    }
+    public virtual void DeleteWorld(bool var1, int var2) { }
 
-    public virtual void deleteWorld(bool var1, int var2)
-    {
-    }
-
-    public virtual void selectNextField()
-    {
-    }
+    public virtual void SelectNextField() { }
 }

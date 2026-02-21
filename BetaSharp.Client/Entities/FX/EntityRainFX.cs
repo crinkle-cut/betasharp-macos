@@ -17,7 +17,7 @@ public class EntityRainFX : EntityFX
         particleRed = 1.0F;
         particleGreen = 1.0F;
         particleBlue = 1.0F;
-        particleTextureIndex = 19 + random.nextInt(4);
+        particleTextureIndex = 19 + random.NextInt(4);
         setBoundingBoxSpacing(0.01F, 0.01F);
         particleGravity = 0.06F;
         particleMaxAge = (int)(8.0D / (java.lang.Math.random() * 0.8D + 0.2D));
@@ -54,10 +54,10 @@ public class EntityRainFX : EntityFX
             velocityZ *= (double)0.7F;
         }
 
-        Material material = world.getMaterial(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z));
+        Material material = world.getMaterial(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z));
         if (material.IsFluid || material.IsSolid)
         {
-            double height = (double)((float)(MathHelper.floor_double(y) + 1) - BlockFluid.getFluidHeightFromMeta(world.getBlockMeta(MathHelper.floor_double(x), MathHelper.floor_double(y), MathHelper.floor_double(z))));
+            double height = (double)((float)(MathHelper.Floor(y) + 1) - BlockFluid.getFluidHeightFromMeta(world.getBlockMeta(MathHelper.Floor(x), MathHelper.Floor(y), MathHelper.Floor(z))));
             if (y < height)
             {
                 markDead();

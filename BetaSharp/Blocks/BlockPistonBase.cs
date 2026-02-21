@@ -26,7 +26,7 @@ public class BlockPistonBase : Block
     public override int getTexture(int side, int meta)
     {
         int var3 = getFacing(meta);
-        return var3 > 5 ? textureId : (side == var3 ? (!isExtended(meta) && minX <= 0.0D && minY <= 0.0D && minZ <= 0.0D && maxX >= 1.0D && maxY >= 1.0D && maxZ >= 1.0D ? textureId : 110) : (side == PistonConstants.field_31057_a[var3] ? 109 : 108));
+        return var3 > 5 ? textureId : (side == var3 ? (!isExtended(meta) && BoundingBox.minX <= 0.0D && BoundingBox.minY <= 0.0D && BoundingBox.minZ <= 0.0D && BoundingBox.maxX >= 1.0D && BoundingBox.maxY >= 1.0D && BoundingBox.maxZ >= 1.0D ? textureId : 110) : (side == PistonConstants.field_31057_a[var3] ? 109 : 108));
     }
 
     public override int getRenderType()
@@ -110,7 +110,7 @@ public class BlockPistonBase : Block
             if (push(world, x, y, z, data2))
             {
                 world.setBlockMeta(x, y, z, data2 | 8);
-                world.playSound((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D, "tile.piston.out", 0.5F, world.random.nextFloat() * 0.25F + 0.6F);
+                world.playSound((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D, "tile.piston.out", 0.5F, world.random.NextFloat() * 0.25F + 0.6F);
             }
         }
         else if (data1 == 1)
@@ -175,7 +175,7 @@ public class BlockPistonBase : Block
                 deaf = true;
             }
 
-            world.playSound((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D, "tile.piston.in", 0.5F, world.random.nextFloat() * 0.15F + 0.6F);
+            world.playSound((double)x + 0.5D, (double)y + 0.5D, (double)z + 0.5D, "tile.piston.in", 0.5F, world.random.NextFloat() * 0.15F + 0.6F);
         }
 
         deaf = false;
@@ -243,7 +243,7 @@ public class BlockPistonBase : Block
 
     private static int getFacingForPlacement(World world, int x, int y, int z, EntityPlayer player)
     {
-        if (MathHelper.abs((float)player.x - (float)x) < 2.0F && MathHelper.abs((float)player.z - (float)z) < 2.0F)
+        if (MathF.Abs((float)player.x - (float)x) < 2.0F && MathHelper.Abs((float)player.z - (float)z) < 2.0F)
         {
             double var5 = player.y + 1.82D - (double)player.standingEyeHeight;
             if (var5 - (double)y > 2.0D)
@@ -257,7 +257,7 @@ public class BlockPistonBase : Block
             }
         }
 
-        int var7 = MathHelper.floor_double((double)(player.yaw * 4.0F / 360.0F) + 0.5D) & 3;
+        int var7 = MathHelper.Floor((double)(player.yaw * 4.0F / 360.0F) + 0.5D) & 3;
         return var7 == 0 ? 2 : (var7 == 1 ? 5 : (var7 == 2 ? 3 : (var7 == 3 ? 4 : 0)));
     }
 

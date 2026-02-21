@@ -11,7 +11,7 @@ public class EntityFallingSand : Entity
     public static readonly new Class Class = ikvm.runtime.Util.getClassFromTypeHandle(typeof(EntityFallingSand).TypeHandle);
 
     public int blockId;
-    public int fallTime = 0;
+    public int fallTime;
 
     public EntityFallingSand(World world) : base(world)
     {
@@ -63,9 +63,9 @@ public class EntityFallingSand : Entity
             velocityX *= (double)0.98F;
             velocityY *= (double)0.98F;
             velocityZ *= (double)0.98F;
-            int floorX = MathHelper.floor_double(x);
-            int floorY = MathHelper.floor_double(y);
-            int floorZ = MathHelper.floor_double(z);
+            int floorX = MathHelper.Floor(x);
+            int floorY = MathHelper.Floor(y);
+            int floorZ = MathHelper.Floor(z);
             if (world.getBlockId(floorX, floorY, floorZ) == blockId)
             {
                 world.setBlock(floorX, floorY, floorZ, 0);
