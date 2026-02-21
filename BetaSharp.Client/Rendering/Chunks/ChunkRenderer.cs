@@ -204,16 +204,22 @@ public class ChunkRenderer
 
         chunkShader.SetUniformMatrix4("projectionMatrix", projection);
 
-        translucentRenderers.Sort((a, b) =>
+        int count = translucentRenderers.Count;
+        if (count > 0)
         {
-            double distA = Vector3D.DistanceSquared(ToDoubleVec(a.Position), viewPos);
-            double distB = Vector3D.DistanceSquared(ToDoubleVec(b.Position), viewPos);
-            return distB.CompareTo(distA);
-        });
+            var distances = new double[count];
+            for (int i = 0; i < count; i++)
+            {
+                distances[i] = Vector3D.DistanceSquared(ToDoubleVec(translucentRenderers[i].Position), viewPos);
+            }
 
-        foreach (var renderer in translucentRenderers)
-        {
-            renderer.Render(chunkShader, 1, viewPos, modelView);
+            var renderersArray = translucentRenderers.ToArray();
+            Array.Sort(distances, renderersArray, Comparer<double>.Create((a, b) => b.CompareTo(a)));
+
+            for (int i = 0; i < count; i++)
+            {
+                renderersArray[i].Render(chunkShader, 1, viewPos, modelView);
+            }
         }
 
         translucentRenderers.Clear();

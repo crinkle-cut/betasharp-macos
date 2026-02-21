@@ -41,6 +41,8 @@ public unsafe class DisplayListCompiler
     private bool _compiledHasNormals;
     private uint _compiledStride = 32;
 
+    private readonly Stack<(uint vao, uint vbo)> _vaoPool = new();
+
     public bool IsCompiling { get; private set; }
 
     public DisplayListCompiler(GL gl)
@@ -138,8 +140,17 @@ public unsafe class DisplayListCompiler
 
         if (_stagingBufferCount == 0 || vertexCount == 0) return;
 
-        uint vao = _gl.GenVertexArray();
-        uint vbo = _gl.GenBuffer();
+        uint vao, vbo;
+        if (!_vaoPool.TryPop(out var pooled))
+        {
+            vao = _gl.GenVertexArray();
+            vbo = _gl.GenBuffer();
+        }
+        else
+        {
+            vao = pooled.vao;
+            vbo = pooled.vbo;
+        }
 
         _gl.BindVertexArray(vao);
         _gl.BindBuffer(GLEnum.ArrayBuffer, vbo);
@@ -236,9 +247,22 @@ public unsafe class DisplayListCompiler
         {
             if (cmd.Type == DLCommandType.DrawChunk)
             {
-                _gl.DeleteBuffer(cmd.Vbo);
-                _gl.DeleteVertexArray(cmd.Vao);
+                _vaoPool.Push((cmd.Vao, cmd.Vbo));
             }
+        }
+    }
+    public void Dispose()
+    {
+        foreach (var list in _emulatedLists.Values)
+        {
+            FreeGpuResources(list);
+        }
+        _emulatedLists.Clear();
+
+        while (_vaoPool.TryPop(out var resources))
+        {
+            _gl.DeleteBuffer(resources.vbo);
+            _gl.DeleteVertexArray(resources.vao);
         }
     }
 }

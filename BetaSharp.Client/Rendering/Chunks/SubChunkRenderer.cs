@@ -21,6 +21,7 @@ public class SubChunkRenderer : IDisposable
     private readonly VertexBuffer<ChunkVertex>[] vertexBuffers = new VertexBuffer<ChunkVertex>[2];
     private readonly VertexArray[] vertexArrays = new VertexArray[2];
     private readonly int[] vertexCounts = new int[2];
+    private static readonly bool isVaoSupported = VertexArray.IsSupported;
     private bool disposed;
 
     public SubChunkRenderer(Vector3D<int> position)
@@ -88,7 +89,7 @@ public class SubChunkRenderer : IDisposable
 
         vertexCounts[bufferIdx] = meshData.Length;
 
-            if (VertexArray.IsSupported && vertexArrays[bufferIdx] == null)
+            if (isVaoSupported && vertexArrays[bufferIdx] == null)
             {
                 vertexArrays[bufferIdx] = new();
                 vertexArrays[bufferIdx].Bind();
@@ -96,7 +97,7 @@ public class SubChunkRenderer : IDisposable
                 ConfigureVertexAttribs();
                 VertexArray.Unbind();
             }
-            else if (!VertexArray.IsSupported)
+            else if (!isVaoSupported)
             {
                 GLManager.GL.BindBuffer(GLEnum.ArrayBuffer, 0);
             }
@@ -145,15 +146,19 @@ public class SubChunkRenderer : IDisposable
             if (vertexCount == 0)
                 return;
 
-            Vector3D<double> pos = new(PositionMinus.X - viewPos.X, PositionMinus.Y - viewPos.Y, PositionMinus.Z - viewPos.Z);
-            pos += new Vector3D<double>(ClipPosition.X, ClipPosition.Y, ClipPosition.Z);
+            float x = (float)(PositionMinus.X - viewPos.X + ClipPosition.X);
+            float y = (float)(PositionMinus.Y - viewPos.Y + ClipPosition.Y);
+            float z = (float)(PositionMinus.Z - viewPos.Z + ClipPosition.Z);
 
-            modelViewMatrix = Matrix4X4.CreateTranslation(new Vector3D<float>((float)pos.X, (float)pos.Y, (float)pos.Z)) * modelViewMatrix;
+            modelViewMatrix.M41 += modelViewMatrix.M11 * x + modelViewMatrix.M21 * y + modelViewMatrix.M31 * z;
+            modelViewMatrix.M42 += modelViewMatrix.M12 * x + modelViewMatrix.M22 * y + modelViewMatrix.M32 * z;
+            modelViewMatrix.M43 += modelViewMatrix.M13 * x + modelViewMatrix.M23 * y + modelViewMatrix.M33 * z;
+            modelViewMatrix.M44 += modelViewMatrix.M14 * x + modelViewMatrix.M24 * y + modelViewMatrix.M34 * z;
 
             shader.SetUniformMatrix4("modelViewMatrix", modelViewMatrix);
             shader.SetUniform2("chunkPos", Position.X, Position.Z);
 
-            if (VertexArray.IsSupported)
+            if (isVaoSupported)
             {
                 vertexArrays[pass].Bind();
                 GLManager.GL.DrawArrays(GLEnum.Triangles, 0, (uint)vertexCount);
