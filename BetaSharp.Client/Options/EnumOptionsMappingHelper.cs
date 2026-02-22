@@ -43,5 +43,11 @@ public class EnumOptionsMappingHelper : java.lang.Object
             enumOptionsMappingHelperArray[EnumOptions.REDUCE_RESOLUTION.ordinal()] = 6;
         }
         catch (NoSuchFieldError) { }
+
+        try
+        {
+            enumOptionsMappingHelperArray[EnumOptions.DOUBLE_BUFFERING.ordinal()] = 7;
+        }
+        catch (NoSuchFieldError) { }
     }
 }

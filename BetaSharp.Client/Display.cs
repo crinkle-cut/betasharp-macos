@@ -469,6 +469,11 @@ public static unsafe class Display
                 _glfw?.WindowHint((WindowHintBool)0x00023001, false);
             }
 
+            if (BetaSharp.Client.Minecraft.INSTANCE?.options != null)
+            {
+                _glfw?.WindowHint((WindowHintBool)0x00021010, BetaSharp.Client.Minecraft.INSTANCE.options.DoubleBuffering);
+            }
+
             var options = WindowOptions.Default;
             options.Size = new Vector2D<int>(_currentMode.getWidth(), _currentMode.getHeight());
             options.Title = _title;

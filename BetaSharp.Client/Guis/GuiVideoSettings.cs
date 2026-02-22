@@ -20,7 +20,8 @@ public class GuiVideoSettings : GuiScreen
         EnumOptions.MSAA,
         EnumOptions.ENVIRONMENT_ANIMATION,
         EnumOptions.DEBUG_MODE,
-        EnumOptions.REDUCE_RESOLUTION
+        EnumOptions.REDUCE_RESOLUTION,
+        EnumOptions.DOUBLE_BUFFERING
     };
 
     public GuiVideoSettings(GuiScreen parent, GameOptions options)

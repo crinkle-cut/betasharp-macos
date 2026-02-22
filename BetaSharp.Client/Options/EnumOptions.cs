@@ -19,10 +19,11 @@ public class EnumOptions : java.lang.Object
     public static readonly EnumOptions MSAA = new("MSAA", false, false, 16);
     public static readonly EnumOptions ENVIRONMENT_ANIMATION = new("Environment Anim", false, true, 17);
     public static readonly EnumOptions REDUCE_RESOLUTION = new("Reduce Resolution", false, true, 25);
+    public static readonly EnumOptions DOUBLE_BUFFERING = new("Double Buffering", false, true, 26);
 
     private static readonly EnumOptions[] s_allValues =
     [
-        MUSIC, SOUND, INVERT_MOUSE, SENSITIVITY, RENDER_DISTANCE, VIEW_BOBBING, FRAMERATE_LIMIT, FOV, BRIGHTNESS, DIFFICULTY, GUI_SCALE, ANISOTROPIC, MIPMAPS, DEBUG_MODE, MSAA, ENVIRONMENT_ANIMATION, REDUCE_RESOLUTION
+        MUSIC, SOUND, INVERT_MOUSE, SENSITIVITY, RENDER_DISTANCE, VIEW_BOBBING, FRAMERATE_LIMIT, FOV, BRIGHTNESS, DIFFICULTY, GUI_SCALE, ANISOTROPIC, MIPMAPS, DEBUG_MODE, MSAA, ENVIRONMENT_ANIMATION, REDUCE_RESOLUTION, DOUBLE_BUFFERING
     ];
 
     private readonly bool enumFloat;

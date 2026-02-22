@@ -79,6 +79,8 @@ public class GameOptions
     public bool EnvironmentAnimation = true;
     public bool ReduceResolutionOnMac = false;
     public bool INITIAL_REDUCE_RESOLUTION;
+    public bool DoubleBuffering = true;
+    public bool INITIAL_DOUBLE_BUFFERING;
 
     public GameOptions(Minecraft mc, string mcDataDir)
     {
@@ -100,6 +102,7 @@ public class GameOptions
         LoadOptions();
         INITIAL_MSAA = MSAALevel;
         INITIAL_REDUCE_RESOLUTION = ReduceResolutionOnMac;
+        INITIAL_DOUBLE_BUFFERING = DoubleBuffering;
     }
 
     public GameOptions() { }
@@ -214,6 +217,10 @@ public class GameOptions
                 // We could throw a reload or just let it be handled on next resize or restart.
             }
         }
+        else if (option == EnumOptions.DOUBLE_BUFFERING)
+        {
+            DoubleBuffering = !DoubleBuffering;
+        }
 
         SaveOptions();
     }
@@ -239,6 +246,7 @@ public class GameOptions
             4 => DebugMode,
             5 => EnvironmentAnimation,
             6 => ReduceResolutionOnMac,
+            7 => DoubleBuffering,
             _ => false
         };
     }
@@ -257,6 +265,10 @@ public class GameOptions
             bool isEnabled = GetOptionOrdinalValue(option);
             string result = label + (isEnabled ? translations.TranslateKey("options.on") : translations.TranslateKey("options.off"));
             if (option == EnumOptions.REDUCE_RESOLUTION && isEnabled != INITIAL_REDUCE_RESOLUTION)
+            {
+                result += " (Restart required)";
+            }
+            if (option == EnumOptions.DOUBLE_BUFFERING && isEnabled != INITIAL_DOUBLE_BUFFERING)
             {
                 result += " (Restart required)";
             }
@@ -385,6 +397,7 @@ public class GameOptions
             case "debugMode": DebugMode = value == "true"; break;
             case "envAnimation": EnvironmentAnimation = value == "true"; break;
             case "reduceResolutionOnMac": ReduceResolutionOnMac = value == "true"; break;
+            case "doubleBuffering": DoubleBuffering = value == "true"; break;
             case "cameraMode": CameraMode = (EnumCameraMode)int.Parse(value); break;
             case "thirdPersonView": // backward compatibility
                 CameraMode = value == "true" ? EnumCameraMode.ThirdPerson : EnumCameraMode.FirstPerson;
@@ -441,6 +454,7 @@ public class GameOptions
             writer.WriteLine($"debugMode:{DebugMode.ToString().ToLower()}");
             writer.WriteLine($"envAnimation:{EnvironmentAnimation.ToString().ToLower()}");
             writer.WriteLine($"reduceResolutionOnMac:{ReduceResolutionOnMac.ToString().ToLower()}");
+            writer.WriteLine($"doubleBuffering:{DoubleBuffering.ToString().ToLower()}");
             writer.WriteLine($"cameraMode:{(int)CameraMode}");
 
             foreach (var bind in KeyBindings)
