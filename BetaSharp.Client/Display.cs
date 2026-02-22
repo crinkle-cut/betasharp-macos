@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using BetaSharp.Client.Options;
 using Silk.NET.GLFW;
 using Silk.NET.Maths;
 using Silk.NET.OpenGL.Legacy;

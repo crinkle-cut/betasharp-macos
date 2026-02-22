@@ -49,5 +49,11 @@ public class EnumOptionsMappingHelper : java.lang.Object
             enumOptionsMappingHelperArray[EnumOptions.DOUBLE_BUFFERING.ordinal()] = 7;
         }
         catch (NoSuchFieldError) { }
+
+        try
+        {
+            enumOptionsMappingHelperArray[EnumOptions.VSYNC.ordinal()] = 8;
+        }
+        catch (NoSuchFieldError) { }
     }
 }

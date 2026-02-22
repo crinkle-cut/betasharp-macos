@@ -18,11 +18,14 @@ using BetaSharp.Worlds;
 using BetaSharp.Worlds.Chunks;
 using BetaSharp.Worlds.Storage;
 using java.net;
+using Microsoft.Extensions.Logging;
 
 namespace BetaSharp.Client.Network;
 
 public class ClientNetworkHandler : NetHandler
 {
+    private readonly ILogger<ClientNetworkHandler> _logger = Log.Instance.For<ClientNetworkHandler>();
+
     private bool disconnected;
     private readonly Connection netManager;
     public string field_1209_a;
@@ -517,7 +520,7 @@ public class ClientNetworkHandler : NetHandler
         double z = packet.zPosition / 32.0D;
         float yaw = packet.yaw * 360 / 256.0F;
         float pitch = packet.pitch * 360 / 256.0F;
-        EntityLiving ent = (EntityLiving)EntityRegistry.create(packet.type, mc.world);
+        EntityLiving ent = (EntityLiving)EntityRegistry.Create(packet.type, mc.world);
         ent.trackedPosX = packet.xPosition;
         ent.trackedPosY = packet.yPosition;
         ent.trackedPosZ = packet.zPosition;
@@ -776,7 +779,7 @@ public class ClientNetworkHandler : NetHandler
         }
         else
         {
-            Log.Info($"Unknown itemid: {packet.id}");
+            _logger.LogInformation($"Unknown itemid: {packet.id}");
         }
 
     }

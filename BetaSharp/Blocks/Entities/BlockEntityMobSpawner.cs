@@ -1,6 +1,7 @@
 using BetaSharp.Entities;
 using BetaSharp.NBT;
 using BetaSharp.Util.Maths;
+using Microsoft.Extensions.Logging;
 
 namespace BetaSharp.Blocks.Entities;
 
@@ -10,6 +11,8 @@ public class BlockEntityMobSpawner : BlockEntity
     private string _spawnedEntityId = "Pig";
     public double Rotation { get; set; }
     public double LastRotation { get; set; } = 0.0D;
+
+    private readonly ILogger<BlockEntityMobSpawner> _logger = Log.Instance.For<BlockEntityMobSpawner>();
 
     public BlockEntityMobSpawner()
     {
@@ -64,13 +67,13 @@ public class BlockEntityMobSpawner : BlockEntity
 
                 for (int spawnAttempt = 0; spawnAttempt < max; ++spawnAttempt)
                 {
-                    EntityLiving entityLiving = (EntityLiving)EntityRegistry.create(_spawnedEntityId, world);
+                    EntityLiving entityLiving = (EntityLiving)EntityRegistry.Create(_spawnedEntityId, world);
                     if (entityLiving == null)
                     {
                         return;
                     }
 
-                    int count = world.collectEntitiesByClass(entityLiving.getClass(), new Box(x, y, z, x + 1, y + 1, z + 1).expand(8.0D, 4.0D, 8.0D)).Count;
+                    int count = world.CollectEntitiesOfType<EntityLiving>(new Box(x, y, z, x + 1, y + 1, z + 1).expand(8.0D, 4.0D, 8.0D)).Where(e => e.GetType() == entityLiving.GetType()).Count();
                     if (count >= 6)
                     {
                         ResetDelay();
@@ -110,7 +113,7 @@ public class BlockEntityMobSpawner : BlockEntity
     private void ResetDelay()
     {
         SpawnDelay = 200 + world.random.NextInt(600);
-        Log.Info("Spawn Delay: " + SpawnDelay);
+        _logger.LogInformation("Spawn Delay: " + SpawnDelay);
     }
 
     public override void readNbt(NBTTagCompound nbt)

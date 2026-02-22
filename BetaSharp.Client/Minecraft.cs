@@ -1,8 +1,6 @@
 using BetaSharp.Client.Options;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Avalonia;
-using Avalonia.Controls;
 using BetaSharp.Blocks;
 using BetaSharp.Client.Achievements;
 using BetaSharp.Client.Entities;
@@ -21,7 +19,6 @@ using BetaSharp.Client.Sound;
 using BetaSharp.Client.Textures;
 using BetaSharp.Entities;
 using BetaSharp.Items;
-using BetaSharp.Launcher;
 using BetaSharp.Profiling;
 using BetaSharp.Server.Internal;
 using BetaSharp.Stats;
@@ -32,15 +29,19 @@ using BetaSharp.Worlds;
 using BetaSharp.Worlds.Colors;
 using BetaSharp.Worlds.Storage;
 using ImGuiNET;
+using java.lang;
+using Microsoft.Extensions.Logging;
 using Silk.NET.Input;
 using Silk.NET.OpenGL.Legacy;
 using Silk.NET.OpenGL.Legacy.Extensions.ImGui;
+using Exception = System.Exception;
 
 namespace BetaSharp.Client;
 
 public partial class Minecraft
 {
     public static Minecraft INSTANCE;
+    private readonly ILogger<Minecraft> _logger = Log.Instance.For<Minecraft>();
     public PlayerController playerController;
     private bool fullscreen;
     private bool hasCrashed;
@@ -136,7 +137,7 @@ public partial class Minecraft
     public void onMinecraftCrash(Exception crashInfo)
     {
         hasCrashed = true;
-        Log.Fatal(crashInfo, "The game has crashed!");
+        _logger.LogError(crashInfo, "The game has crashed!");
     }
 
     public void setServer(string name, int port)
@@ -188,10 +189,11 @@ public partial class Minecraft
 
             GLManager.Init(Display.getGL()!);
 
+            Display.getGlfw().SwapInterval(options.VSync ? 1 : 0);
         }
         catch (Exception ex)
         {
-            Log.Error(ex);
+            _logger.LogError(ex, "Exception");
         }
         texturePackList = new TexturePacks(this, new DirectoryInfo(mcDataDir.getAbsolutePath()));
         textureManager = new TextureManager(texturePackList, options);
@@ -216,13 +218,13 @@ public partial class Minecraft
 
 
         bool anisotropicFiltering = GLManager.GL.IsExtensionPresent("GL_EXT_texture_filter_anisotropic");
-        Log.Info($"Anisotropic Filtering Supported: {anisotropicFiltering}");
+        _logger.LogInformation($"Anisotropic Filtering Supported: {anisotropicFiltering}");
 
         if (anisotropicFiltering)
         {
             GLManager.GL.GetFloat(GLEnum.MaxTextureMaxAnisotropy, out float maxAnisotropy);
             GameOptions.MaxAnisotropy = maxAnisotropy;
-            Log.Info($"Max Anisotropy: {maxAnisotropy}");
+            _logger.LogInformation($"Max Anisotropy: {maxAnisotropy}");
         }
         else
         {
@@ -238,7 +240,7 @@ public partial class Minecraft
         }
         catch (Exception e)
         {
-            Log.Error(e, "Failed to initialize ImGui");
+            _logger.LogError($"Failed to initialize ImGui: {e}");
             imGuiController = null;
         }
 
@@ -352,7 +354,7 @@ public partial class Minecraft
         return saveLoader;
     }
 
-    public void displayGuiScreen(GuiScreen newScreen)
+    public void displayGuiScreen(GuiScreen? newScreen)
     {
         currentScreen?.OnGuiClosed();
 
@@ -405,10 +407,10 @@ public partial class Minecraft
         GLEnum glError = GLManager.GL.GetError();
         if (glError != 0)
         {
-            Log.Error($"#### GL ERROR ####");
-            Log.Error($"@ {location}");
-            Log.Error($"> {glError.ToString()}");
-            Log.Error($"");
+            _logger.LogError($"#### GL ERROR ####");
+            _logger.LogError($"@ {location}");
+            _logger.LogError($"> {glError.ToString()}");
+            _logger.LogError($"");
         }
     }
 
@@ -420,7 +422,7 @@ public partial class Minecraft
             statFileWriter.func_27175_b();
             statFileWriter.syncStats();
 
-            Log.Info("Stopping!");
+            _logger.LogInformation("Stopping!");
 
             try
             {
@@ -1004,7 +1006,7 @@ public partial class Minecraft
         }
         catch (Exception displayException)
         {
-            Log.Error(displayException, "Failed to toggle fullscreen");
+            _logger.LogError(displayException.ToString());
         }
     }
 
@@ -1386,7 +1388,7 @@ public partial class Minecraft
 
     private void forceReload()
     {
-        Log.Info("FORCING RELOAD!");
+        _logger.LogInformation("FORCING RELOAD!");
         sndManager = new SoundManager();
         sndManager.LoadSoundSettings(options);
     }
@@ -1473,8 +1475,8 @@ public partial class Minecraft
         Vec3i centerPos = world.getSpawnPos();
         if (player != null)
         {
-            centerPos.x = (int)player.x;
-            centerPos.z = (int)player.z;
+            centerPos.X = (int)player.x;
+            centerPos.Z = (int)player.z;
         }
 
         for (int xOffset = -loadingRadius; xOffset <= loadingRadius; xOffset += 16)
@@ -1482,7 +1484,7 @@ public partial class Minecraft
             for (int zOffset = -loadingRadius; zOffset <= loadingRadius; zOffset += 16)
             {
                 loadingScreen.setLoadingProgress(loadedChunkCount++ * 100 / totalChunksToLoad);
-                world.getBlockId(centerPos.x + xOffset, 64, centerPos.z + zOffset);
+                world.getBlockId(centerPos.X + xOffset, 64, centerPos.Z + zOffset);
 
                 while (world.doLightingUpdates())
                 {
@@ -1544,32 +1546,33 @@ public partial class Minecraft
 
     public void respawn(bool ignoreSpawnPosition, int newDimensionId)
     {
-        Vec3i playerSpawnPos = null;
-        Vec3i respawnPos = null;
-        bool useBedSpawn = true;
-        if (player != null && !ignoreSpawnPosition)
+        Vec3i? playerSpawnPos = null;
+        Vec3i? respawnPos = null;
+
+        if (player is not null && !ignoreSpawnPosition)
         {
             playerSpawnPos = player.getSpawnPos();
-            if (playerSpawnPos != null)
+
+            if (playerSpawnPos is not null)
             {
                 respawnPos = EntityPlayer.findRespawnPosition(world, playerSpawnPos);
-                if (respawnPos == null)
+
+                if (respawnPos is null)
                 {
                     player.sendMessage("tile.bed.notValid");
                 }
             }
         }
 
-        if (respawnPos == null)
-        {
-            respawnPos = world.getSpawnPos();
-            useBedSpawn = false;
-        }
+        bool useBedSpawn = respawnPos is not null;
+        Vec3i finalRespawnPos = respawnPos ?? world.getSpawnPos();
 
         world.UpdateSpawnPosition();
         world.updateEntityLists();
+
         int previousPlayerId = 0;
-        if (player != null)
+
+        if (player is not null)
         {
             previousPlayerId = player.id;
             world.Remove(player);
@@ -1579,12 +1582,18 @@ public partial class Minecraft
         player = (ClientPlayerEntity)playerController.createPlayer(world);
         player.dimensionId = newDimensionId;
         camera = player;
+
         player.teleportToTop();
+
         if (useBedSpawn)
         {
             player.setSpawnPos(playerSpawnPos);
-            player.setPositionAndAnglesKeepPrevAngles((double)((float)respawnPos.x + 0.5F), (double)((float)respawnPos.y + 0.1F),
-                (double)((float)respawnPos.z + 0.5F), 0.0F, 0.0F);
+            player.setPositionAndAnglesKeepPrevAngles(
+                finalRespawnPos.X + 0.5,
+                finalRespawnPos.Y + 0.1,
+                finalRespawnPos.Z + 0.5,
+                0.0F,
+                0.0F);
         }
 
         playerController.flipPlayer(player);
@@ -1593,10 +1602,12 @@ public partial class Minecraft
         player.id = previousPlayerId;
         player.spawn();
         playerController.fillHotbar(player);
+
         showText("Respawning");
+
         if (currentScreen is GuiGameOver)
         {
-            displayGuiScreen((GuiScreen)null);
+            displayGuiScreen(null);
         }
     }
 
@@ -1626,11 +1637,6 @@ public partial class Minecraft
         return player is EntityClientPlayerMP ? ((EntityClientPlayerMP)player).sendQueue : null;
     }
 
-    private static AppBuilder BuildAvaloniaApp()
-        => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .LogToTrace();
-
     public static void Startup(string[] args)
     {
         // On macOS, IKVM's AWT tries to initialize the native AppKit toolkit
@@ -1642,36 +1648,14 @@ public partial class Minecraft
             java.lang.System.setProperty("java.awt.headless", "true");
         }
 
-        bool valid = JarValidator.ValidateJar("b1.7.3.jar");
-        string playerName = null;
-        string sessionToken = null;
-        playerName = "Player" + java.lang.System.currentTimeMillis() % 1000L;
-        if (args.Length > 0)
+        (string Name, string Session) result = args.Length switch
         {
-            playerName = args[0];
-        }
+            0 => ($"Player{Random.Shared.Next()}", "-"),
+            1 => (args[0], "-"),
+            _ => (args[0], args[1])
+        };
 
-        sessionToken = "-";
-        if (args.Length > 1)
-        {
-            sessionToken = args[1];
-        }
-
-        if (!valid)
-        {
-            var app = BuildAvaloniaApp();
-
-            app.StartWithClassicDesktopLifetime(args, ShutdownMode.OnMainWindowClose);
-
-            if (LauncherWindow.Result != null && LauncherWindow.Result.Success)
-            {
-                StartMainThread(playerName, sessionToken);
-            }
-        }
-        else
-        {
-            StartMainThread(playerName, sessionToken);
-        }
+        StartMainThread(result.Name, result.Session);
     }
 
     public static bool isGuiEnabled()

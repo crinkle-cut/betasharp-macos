@@ -3,6 +3,7 @@ using BetaSharp.Blocks.Entities;
 using BetaSharp.Entities;
 using BetaSharp.Profiling;
 using BetaSharp.Util.Maths;
+using Microsoft.Extensions.Logging;
 
 namespace BetaSharp.Worlds.Chunks;
 
@@ -26,6 +27,7 @@ public class Chunk : java.lang.Object
     public bool empty;
     public bool lastSaveHadEntities;
     public long lastSaveTime;
+    private readonly ILogger<Chunk> _logger = Log.Instance.For<Chunk>();
 
     public Chunk(World world, int x, int z)
     {
@@ -118,7 +120,7 @@ public class Chunk : java.lang.Object
                     var1 = var4;
                 }
 
-                if (!world.dimension.hasCeiling)
+                if (!world.dimension.HasCeiling)
                 {
                     int var6 = 15;
                     int var7 = 127;
@@ -300,7 +302,7 @@ public class Chunk : java.lang.Object
             }
 
             this.meta.setNibble(x, y, z, meta);
-            if (!world.dimension.hasCeiling)
+            if (!world.dimension.HasCeiling)
             {
                 if (Block.BlockLightOpacity[var6 & 255] != 0)
                 {
@@ -435,7 +437,7 @@ public class Chunk : java.lang.Object
         int var3 = MathHelper.Floor(entity.z / 16.0D);
         if (var2 != x || var3 != z)
         {
-            Log.Info($"Wrong location! {entity}");
+            _logger.LogInformation($"Wrong location! {entity}");
             java.lang.Thread.dumpStack();
         }
 
@@ -537,7 +539,7 @@ public class Chunk : java.lang.Object
         }
         else
         {
-            Log.Info("Attempted to place a tile entity where there was no entity tile!");
+            _logger.LogInformation("Attempted to place a tile entity where there was no entity tile!");
         }
     }
 
@@ -619,7 +621,7 @@ public class Chunk : java.lang.Object
 
     }
 
-    public virtual void collectEntitiesByClass(java.lang.Class entityClass, Box box, List<Entity> result)
+    public virtual void CollectEntitiesOfType<T>(Box box, List<T> result) where T : Entity
     {
         int var4 = MathHelper.Floor((box.minY - 2.0D) / 16.0D);
         int var5 = MathHelper.Floor((box.maxY + 2.0D) / 16.0D);
@@ -640,13 +642,12 @@ public class Chunk : java.lang.Object
             for (int var8 = 0; var8 < var7.Count; ++var8)
             {
                 Entity var9 = var7[var8];
-                if (entityClass.isAssignableFrom(var9.getClass()) && var9.boundingBox.intersects(box))
+                if (var9 is T t && var9.boundingBox.intersects(box))
                 {
-                    result.Add(var9);
+                    result.Add(t);
                 }
             }
         }
-
     }
 
     public virtual bool shouldSave(bool saveEntities)

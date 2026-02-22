@@ -16,6 +16,7 @@ using BetaSharp.Worlds.Dimensions;
 using BetaSharp.Worlds.Storage;
 using java.lang;
 using java.util;
+using Microsoft.Extensions.Logging;
 using Silk.NET.Maths;
 
 namespace BetaSharp.Worlds;
@@ -26,6 +27,7 @@ public abstract class World : java.lang.Object, BlockView
     private const int AUTOSAVE_PERIOD = 40;
     public bool instantBlockUpdateEnabled;
     private readonly List<LightUpdate> lightingQueue;
+    private readonly ILogger<World> _logger = Log.Instance.For<World>();
     public List<Entity> entities;
     private readonly List<Entity> entitiesToUnload;
     private readonly TreeSet scheduledUpdates;
@@ -72,7 +74,7 @@ public abstract class World : java.lang.Object, BlockView
 
     public BiomeSource getBiomeSource()
     {
-        return dimension.biomeSource;
+        return dimension.BiomeSource;
     }
 
     public WorldStorage getWorldStorage()
@@ -117,7 +119,7 @@ public abstract class World : java.lang.Object, BlockView
         properties = new WorldProperties(var4, var2);
         dimension = var3;
         persistentStateManager = new PersistentStateManager(var1);
-        var3.setWorld(this);
+        var3.SetWorld(this);
         chunkSource = CreateChunkCache();
         Rules = properties.RulesTag != null
             ? RuleSet.FromNBT(RuleRegistry.Instance, properties.RulesTag)
@@ -163,7 +165,7 @@ public abstract class World : java.lang.Object, BlockView
         properties = new WorldProperties(var1.properties);
         persistentStateManager = new PersistentStateManager(storage);
         dimension = var2;
-        var2.setWorld(this);
+        var2.SetWorld(this);
         chunkSource = CreateChunkCache();
         Rules = properties.RulesTag != null
             ? RuleSet.FromNBT(RuleRegistry.Instance, properties.RulesTag)
@@ -218,11 +220,11 @@ public abstract class World : java.lang.Object, BlockView
         }
         else if (properties != null && properties.Dimension == -1)
         {
-            dimension = Dimension.fromId(-1);
+            dimension = Dimension.FromId(-1);
         }
         else
         {
-            dimension = Dimension.fromId(0);
+            dimension = Dimension.FromId(0);
         }
 
         bool var6 = false;
@@ -236,7 +238,7 @@ public abstract class World : java.lang.Object, BlockView
             properties.LevelName = var2;
         }
 
-        dimension.setWorld(this);
+        dimension.SetWorld(this);
         chunkSource = CreateChunkCache();
         Rules = properties.RulesTag != null
             ? RuleSet.FromNBT(RuleRegistry.Instance, properties.RulesTag)
@@ -260,7 +262,7 @@ public abstract class World : java.lang.Object, BlockView
         byte var2 = 64;
 
         int var3;
-        for (var3 = 0; !dimension.isValidSpawnPoint(var1, var3); var3 += random.NextInt(64) - random.NextInt(64))
+        for (var3 = 0; !dimension.IsValidSpawnPoint(var1, var3); var3 += random.NextInt(64) - random.NextInt(64))
         {
             var1 += random.NextInt(64) - random.NextInt(64);
         }
@@ -801,7 +803,7 @@ public abstract class World : java.lang.Object, BlockView
 
     public void updateLight(LightType lightType, int x, int y, int z, int l)
     {
-        if (!dimension.hasCeiling || lightType != LightType.Sky)
+        if (!dimension.HasCeiling || lightType != LightType.Sky)
         {
             if (isPosLoaded(x, y, z))
             {
@@ -894,12 +896,12 @@ public abstract class World : java.lang.Object, BlockView
             var5 = blockLight;
         }
 
-        return dimension.lightLevelToLuminance[var5];
+        return dimension.LightLevelToLuminance[var5];
     }
 
     public float getLuminance(int x, int y, int z)
     {
-        return dimension.lightLevelToLuminance[getLightLevel(x, y, z)];
+        return dimension.LightLevelToLuminance[getLightLevel(x, y, z)];
     }
 
     public bool canMonsterSpawn()
@@ -1393,7 +1395,7 @@ public abstract class World : java.lang.Object, BlockView
 
     public float getTime(float var1)
     {
-        return dimension.getTimeOfDay(properties.WorldTime, var1);
+        return dimension.GetTimeOfDay(properties.WorldTime, var1);
     }
 
     public Vector3D<double> getCloudColor(float partialTicks)
@@ -1444,7 +1446,7 @@ public abstract class World : java.lang.Object, BlockView
     public Vector3D<double> getFogColor(float var1)
     {
         float var2 = getTime(var1);
-        return dimension.getFogColor(var2, var1);
+        return dimension.GetFogColor(var2, var1);
     }
 
     public int getTopSolidBlockY(int x, int z)
@@ -2228,7 +2230,7 @@ public abstract class World : java.lang.Object, BlockView
 
     public void queueLightUpdate(LightType type, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, bool bl)
     {
-        if (!dimension.hasCeiling || type != LightType.Sky)
+        if (!dimension.HasCeiling || type != LightType.Sky)
         {
             ++lightingUpdatesScheduled;
 
@@ -2274,7 +2276,7 @@ public abstract class World : java.lang.Object, BlockView
                     var12 = 1000000;
                     if (lightingQueue.Count > 1000000)
                     {
-                        Log.Info($"More than {var12} updates, aborting lighting updates");
+                        _logger.LogInformation($"More than {var12} updates, aborting lighting updates");
                         lightingQueue.Clear();
                     }
 
@@ -2314,7 +2316,7 @@ public abstract class World : java.lang.Object, BlockView
             bool var1 = false;
             if (spawnHostileMobs && difficulty >= 1)
             {
-                var1 = NaturalSpawner.spawnMonstersAndWakePlayers(this, players);
+                var1 = NaturalSpawner.SpawnMonstersAndWakePlayers(this, players);
             }
 
             if (!var1)
@@ -2325,7 +2327,7 @@ public abstract class World : java.lang.Object, BlockView
             }
         }
         Profiler.Start("performSpawning");
-        NaturalSpawner.performSpawning(this, spawnHostileMobs, spawnPeacefulMobs);
+        NaturalSpawner.DoSpawning(this, spawnHostileMobs, spawnPeacefulMobs);
         Profiler.Stop("performSpawning");
         Profiler.Start("unload100OldestChunks");
         chunkSource.tick();
@@ -2374,7 +2376,7 @@ public abstract class World : java.lang.Object, BlockView
 
     protected virtual void UpdateWeatherCycles()
     {
-        if (!dimension.hasCeiling)
+        if (!dimension.HasCeiling)
         {
             if (ticksSinceLightning > 0)
             {
@@ -2668,13 +2670,13 @@ public abstract class World : java.lang.Object, BlockView
         return tempEntityList;
     }
 
-    public List<Entity> collectEntitiesByClass(Class clazz, Box box)
+    public List<T> CollectEntitiesOfType<T>(Box box) where T : Entity
     {
+        List<T> res = new();
         int var3 = MathHelper.Floor((box.minX - 2.0D) / 16.0D);
         int var4 = MathHelper.Floor((box.maxX + 2.0D) / 16.0D);
         int var5 = MathHelper.Floor((box.minZ - 2.0D) / 16.0D);
         int var6 = MathHelper.Floor((box.maxZ + 2.0D) / 16.0D);
-        List<Entity> var7 = new();
 
         for (int var8 = var3; var8 <= var4; ++var8)
         {
@@ -2682,12 +2684,12 @@ public abstract class World : java.lang.Object, BlockView
             {
                 if (hasChunk(var8, var9))
                 {
-                    GetChunk(var8, var9).collectEntitiesByClass(clazz, box, var7);
+                    GetChunk(var8, var9).CollectEntitiesOfType<T>(box, res);
                 }
             }
         }
 
-        return var7;
+        return res;
     }
 
     public List<Entity> getEntities()
@@ -2709,20 +2711,16 @@ public abstract class World : java.lang.Object, BlockView
 
     }
 
-    public int countEntities(Class entityClass)
+    public int CountEntitiesOfType(Type type)
     {
-        int var2 = 0;
+        int res = 0;
 
-        for (int var3 = 0; var3 < entities.Count; ++var3)
+        foreach (var entity in entities)
         {
-            Entity var4 = entities[var3];
-            if (entityClass.isAssignableFrom(var4.getClass()))
-            {
-                ++var2;
-            }
+            if (type.IsInstanceOfType(entity)) res++;
         }
 
-        return var2;
+        return res;
     }
 
     public void addEntities(List<Entity> entities)
@@ -3027,7 +3025,7 @@ public abstract class World : java.lang.Object, BlockView
 
     public void setSpawnPos(Vec3i pos)
     {
-        properties.SetSpawn(pos.x, pos.y, pos.z);
+        properties.SetSpawn(pos.X, pos.Y, pos.Z);
     }
 
     public void LoadChunksNearEntity(Entity entity)

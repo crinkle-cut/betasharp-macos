@@ -4,12 +4,18 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using BetaSharp.Client.Input;
+using java.io;
+using Microsoft.Extensions.Logging;
+using File = System.IO.File;
+using FileNotFoundException = System.IO.FileNotFoundException;
 
 namespace BetaSharp.Client.Options;
 
 public class GameOptions
 {
-    private static readonly string[] RenderDistance =
+    private readonly ILogger<GameOptions> _logger = Log.Instance.For<GameOptions>();
+
+    private static readonly string[] RENDER_DISTANCES =
     [
         "options.renderDistance.far",
         "options.renderDistance.normal",
@@ -38,6 +44,8 @@ public class GameOptions
     public float MusicVolume = 1.0F;
     public float SoundVolume = 1.0F;
     public float MouseSensitivity = 0.5F;
+    public float Brightness = 0.5F;
+    public bool VSync = false;
     public bool InvertMouse;
     public int renderDistance;
     public bool ViewBobbing = true;
@@ -170,6 +178,11 @@ public class GameOptions
         {
             ViewBobbing = !ViewBobbing;
         }
+        else if (option == EnumOptions.VSYNC)
+        {
+            VSync = !VSync;
+            Display.getGlfw().SwapInterval(VSync ? 1 : 0);
+        }
         else if (option == EnumOptions.DIFFICULTY)
         {
             Difficulty = Difficulty + increment & 3;
@@ -247,6 +260,7 @@ public class GameOptions
             5 => EnvironmentAnimation,
             6 => ReduceResolutionOnMac,
             7 => DoubleBuffering,
+            8 => VSync,
             _ => false
         };
     }
@@ -287,6 +301,8 @@ public class GameOptions
     private string GetOptionLabel(EnumOptions option, TranslationStorage translations)
     {
         if (option == EnumOptions.FRAMERATE_LIMIT) return "Max FPS";
+        if (option == EnumOptions.BRIGHTNESS) return "Brightness";
+        if (option == EnumOptions.VSYNC) return "VSync";
         if (option == EnumOptions.FOV) return "FOV";
         return translations.TranslateKey(option.getEnumString());
     }
@@ -310,7 +326,7 @@ public class GameOptions
         else
         {
             return value == 0.0F
-                ? label + translations.TranslateKey("options.off") 
+                ? label + translations.TranslateKey("options.off")
                 : label + $"{(int)(value * 100.0F)}%";
         }
     }
@@ -333,7 +349,7 @@ public class GameOptions
 
     private string FormatEnumValue(EnumOptions option, string label, TranslationStorage translations)
     {
-        if (option == EnumOptions.RENDER_DISTANCE) return label + translations.TranslateKey(RenderDistance[renderDistance]);
+        if (option == EnumOptions.RENDER_DISTANCE) return label + translations.TranslateKey(RENDER_DISTANCES[renderDistance]);
         if (option == EnumOptions.DIFFICULTY) return label + translations.TranslateKey(Difficulties[Difficulty]);
         if (option == EnumOptions.GUI_SCALE) return label + translations.TranslateKey(GuiScales[GuiScale]);
         if (option == EnumOptions.ANISOTROPIC) return label + (AnisotropicLevel == 0 ? translations.TranslateKey("options.off") : AnisoLeves[AnisotropicLevel]);
@@ -357,13 +373,13 @@ public class GameOptions
                 }
                 catch (Exception)
                 {
-                    Log.Error($"Skipping bad option: {line}");
+                    _logger.LogError($"Skipping bad option: {line}");
                 }
             }
         }
         catch (Exception)
         {
-            Log.Error("Failed to load options");
+            _logger.LogError("Failed to load options");
         }
     }
 
@@ -384,6 +400,7 @@ public class GameOptions
             case "guiScale": GuiScale = int.Parse(value); break;
             case "bobView": ViewBobbing = value == "true"; break;
             case "fpsLimit": LimitFramerate = ParseFloat(value); break;
+            case "vsync": VSync = bool.Parse(value); break;
             case "fov": Fov = ParseFloat(value); break;
             case "difficulty": Difficulty = int.Parse(value); break;
             case "skin": Skin = value; break;
@@ -444,6 +461,7 @@ public class GameOptions
             writer.WriteLine($"guiScale:{GuiScale}");
             writer.WriteLine($"bobView:{ViewBobbing.ToString().ToLower()}");
             writer.WriteLine($"fpsLimit:{LimitFramerate}");
+            writer.WriteLine($"vsync:{VSync}");
             writer.WriteLine($"fov:{Fov}");
             writer.WriteLine($"difficulty:{Difficulty}");
             writer.WriteLine($"skin:{Skin}");
@@ -466,7 +484,7 @@ public class GameOptions
         }
         catch (Exception exception)
         {
-            Log.Error($"Failed to save options: {exception.Message}");
+            _logger.LogError($"Failed to save options: {exception.Message}");
         }
     }
 }
